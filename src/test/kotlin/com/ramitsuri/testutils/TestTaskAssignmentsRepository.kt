@@ -1,0 +1,66 @@
+package com.ramitsuri.testutils
+
+import com.ramitsuri.models.CreateType
+import com.ramitsuri.models.ProgressStatus
+import com.ramitsuri.models.TaskAssignment
+import com.ramitsuri.repository.interfaces.MembersRepository
+import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
+import com.ramitsuri.repository.interfaces.TasksRepository
+import java.time.Instant
+
+class TestTaskAssignmentsRepository(
+    private val tasksRepository: TasksRepository,
+    private val membersRepository: MembersRepository
+): BaseTestRepository<TaskAssignment>(), TaskAssignmentsRepository {
+    override suspend fun add(
+        progressStatus: ProgressStatus,
+        statusDate: Instant,
+        taskId: String,
+        memberId: String,
+        dueDate: Instant,
+        createdDate: Instant,
+        createType: CreateType
+    ): TaskAssignment? {
+        tasksRepository.get(taskId) ?: return null
+        membersRepository.get(memberId) ?: return null
+        val id = getNewId()
+        val new = TaskAssignment(id, progressStatus, statusDate, taskId, memberId, dueDate, createdDate, createType)
+        storage[id] = new
+        return new
+    }
+
+    override suspend fun delete(): Int {
+        val size = storage.size
+        storage.clear()
+        return size
+    }
+
+    override suspend fun delete(id: String): Int {
+        val toDelete = storage[id]
+        return toDelete?.let {
+            storage.remove(id)
+            1
+        } ?: run {
+            0
+        }
+    }
+
+    override suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): Int {
+        val toEdit = storage[id]
+        return toEdit?.let {
+            val new = it.copy(progressStatus = progressStatus, progressStatusDate = statusDate)
+            storage[id] = new
+            1
+        } ?: run {
+            0
+        }
+    }
+
+    override suspend fun get(): List<TaskAssignment> {
+        return storage.values.toList()
+    }
+
+    override suspend fun get(id: String): TaskAssignment? {
+        return storage[id]
+    }
+}
