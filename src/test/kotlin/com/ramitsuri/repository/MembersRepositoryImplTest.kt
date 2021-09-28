@@ -1,13 +1,15 @@
 package com.ramitsuri.repository
 
 import com.ramitsuri.data.InstantConverter
+import com.ramitsuri.data.UuidConverter
+import com.ramitsuri.repository.local.LocalMembersRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
 import java.time.Instant
 
 class MembersRepositoryImplTest: BaseRepositoryTest() {
-    private val repository = MembersRepositoryImpl(InstantConverter())
+    private val repository = LocalMembersRepository(InstantConverter(), UuidConverter())
 
     @Test
     fun testAdd_shouldAdd() {

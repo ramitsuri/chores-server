@@ -1,4 +1,4 @@
-package com.ramitsuri.repository
+package com.ramitsuri.repository.local
 
 import com.ramitsuri.data.*
 import com.ramitsuri.models.*
@@ -10,7 +10,7 @@ import org.jetbrains.exposed.sql.statements.InsertStatement
 import java.time.Instant
 import java.util.*
 
-class TaskAssignmentsRepositoryImpl(
+class LocalTaskAssignmentsRepository(
     private val tasksRepository: TasksRepository,
     private val membersRepository: MembersRepository,
     private val instantConverter: Converter<Instant, String>,

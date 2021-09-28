@@ -1,4 +1,4 @@
-package com.ramitsuri.repository
+package com.ramitsuri.repository.local
 
 import com.ramitsuri.data.Converter
 import com.ramitsuri.data.DatabaseFactory
@@ -12,7 +12,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.InsertStatement
 import java.util.*
 
-class MemberAssignmentsRepositoryImpl(
+class LocalMemberAssignmentsRepository(
     private val membersRepository: MembersRepository,
     private val housesRepository: HousesRepository,
     private val uuidConverter: Converter<String, UUID>

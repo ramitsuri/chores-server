@@ -21,10 +21,10 @@ class TestTaskAssignmentsRepository(
         createdDate: Instant,
         createType: CreateType
     ): TaskAssignment? {
-        tasksRepository.get(taskId) ?: return null
-        membersRepository.get(memberId) ?: return null
+        val task = tasksRepository.get(taskId) ?: return null
+        val member = membersRepository.get(memberId) ?: return null
         val id = getNewId()
-        val new = TaskAssignment(id, progressStatus, statusDate, taskId, memberId, dueDate, createdDate, createType)
+        val new = TaskAssignment(id, progressStatus, statusDate, task, member, dueDate, createdDate, createType)
         storage[id] = new
         return new
     }

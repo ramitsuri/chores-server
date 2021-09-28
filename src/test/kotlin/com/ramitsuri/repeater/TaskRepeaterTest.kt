@@ -19,7 +19,13 @@ class TaskRepeaterTest: BaseRepeaterTest() {
     @Before
     fun setUp() {
         taskRepeater =
-            TaskRepeater(tasksRepository, memberAssignmentsRepository, taskAssignmentsRepository, dispatcher)
+            TaskRepeater(
+                tasksRepository,
+                membersRepository,
+                memberAssignmentsRepository,
+                taskAssignmentsRepository,
+                dispatcher
+            )
     }
 
     @After
@@ -143,8 +149,8 @@ class TaskRepeaterTest: BaseRepeaterTest() {
             // Assert
             assertEquals(ProgressStatus.TODO, taskAssignment.progressStatus)
             assertEquals(CreateType.AUTO, taskAssignment.createType)
-            assertEquals(task1.id, taskAssignment.member)
-            assertEquals(member1.id, taskAssignment.member)
+            assertEquals(task1, taskAssignment.task)
+            assertEquals(member1, taskAssignment.member)
             assertEquals(taskDueDateTime, taskAssignment.dueDateTime)
         }
     }
@@ -176,6 +182,8 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
             // Act
             taskRepeater.start(runDateTime, zoneId)
+
+            // Assert
             assertEquals(1, taskAssignmentsRepository.get().size)
         }
     }
@@ -207,6 +215,8 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
             // Act
             taskRepeater.start(runDateTime, zoneId)
+
+            // Assert
             assertEquals(2, taskAssignmentsRepository.get().size)
         }
     }
@@ -238,7 +248,9 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
             // Act
             taskRepeater.start(runDateTime, zoneId)
-            assertEquals(member1.id, taskAssignmentsRepository.get()[1].member)
+
+            // Assert
+            assertEquals(member1, taskAssignmentsRepository.get()[1].member)
         }
     }
 
@@ -270,7 +282,42 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
             // Act
             taskRepeater.start(runDateTime, zoneId)
-            assertEquals(member2.id, taskAssignmentsRepository.get()[1].member)
+
+            // Assert
+            assertEquals(member2, taskAssignmentsRepository.get()[1].member)
+        }
+    }
+
+    @Test
+    fun testStart_shouldAddNewAssignmentWithCorrectDueDateTime() {
+        val taskDueDateTime = baseInstant
+        val runDateTime = ZonedDateTime.ofInstant(baseInstant.plusSeconds(24 * 3600), zoneId)
+        runBlocking {
+            // Arrange
+            addBasic()
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "Task1",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 12,
+                RepeatUnit.HOUR,
+                member1.id,
+                rotateMember = true
+            )
+            val task = tasksRepository.get()[0]
+            addAssignment(
+                dueDate = taskDueDateTime,
+                createdDate = taskDueDateTime,
+                taskId = task.id,
+                memberId = member1.id
+            )
+
+            // Act
+            taskRepeater.start(runDateTime, zoneId)
+            val addedTaskAssignment = taskAssignmentsRepository.get()[1]
+
+            // Assert
+            assertEquals(baseInstant.plusSeconds(12 * 3600), addedTaskAssignment.dueDateTime)
         }
     }
 

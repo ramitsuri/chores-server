@@ -4,6 +4,7 @@ import com.ramitsuri.data.InstantConverter
 import com.ramitsuri.data.UuidConverter
 import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.House
+import com.ramitsuri.repository.local.LocalHousesRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
@@ -12,7 +13,7 @@ import java.util.*
 
 class HousesRepositoryTest: BaseRepositoryTest() {
 
-    private val repository = HousesRepositoryImpl(UuidConverter(), InstantConverter())
+    private val repository = LocalHousesRepository(UuidConverter(), InstantConverter())
 
     @Test
     fun testAdd() {

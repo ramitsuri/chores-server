@@ -1,10 +1,9 @@
-package com.ramitsuri.repository
+package com.ramitsuri.repository.local
 
 import com.ramitsuri.data.Converter
 import com.ramitsuri.data.DatabaseFactory.query
 import com.ramitsuri.data.Tasks
 import com.ramitsuri.extensions.Loggable
-import com.ramitsuri.models.Member
 import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.models.Task
 import com.ramitsuri.repository.interfaces.HousesRepository
@@ -14,7 +13,7 @@ import org.jetbrains.exposed.sql.statements.InsertStatement
 import java.time.Instant
 import java.util.*
 
-class TasksRepositoryImpl(
+class LocalTasksRepository(
     private val housesRepository: HousesRepository,
     private val instantConverter: Converter<Instant, String>,
     private val uuidConverter: Converter<String, UUID>

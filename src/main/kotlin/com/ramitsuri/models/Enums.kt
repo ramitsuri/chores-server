@@ -42,7 +42,8 @@ enum class ProgressStatus(val key: Int) {
 
 enum class ActiveStatus(val key: Int) {
     UNKNOWN(0),
-    ACTIVE(1);
+    ACTIVE(1),
+    INACTIVE(2);
 
     companion object {
         fun fromKey(key: Int): ActiveStatus {

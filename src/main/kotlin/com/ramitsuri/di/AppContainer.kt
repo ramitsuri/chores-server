@@ -1,5 +1,7 @@
 package com.ramitsuri.di
 
+import com.google.auth.oauth2.GoogleCredentials
+import com.google.cloud.firestore.FirestoreOptions
 import com.ramitsuri.data.DatabaseFactory
 import com.ramitsuri.data.InstantConverter
 import com.ramitsuri.data.UuidConverter
@@ -7,7 +9,7 @@ import com.ramitsuri.models.RepeatSchedulerConfig
 import com.ramitsuri.models.SchedulerRepeatType
 import com.ramitsuri.repeater.RepeatScheduler
 import com.ramitsuri.repeater.TaskRepeater
-import com.ramitsuri.repository.*
+import com.ramitsuri.repository.remote.*
 import com.ramitsuri.routes.*
 import com.ramitsuri.utils.DummyRepository
 import io.ktor.server.engine.*
@@ -18,13 +20,20 @@ import java.time.ZoneId
 class AppContainer {
     private val uuidConverter = UuidConverter()
     private val instantConverter = InstantConverter()
-    private val housesRepository = HousesRepositoryImpl(uuidConverter, instantConverter)
-    private val membersRepository = MembersRepositoryImpl(instantConverter, uuidConverter)
-    private val tasksRepository = TasksRepositoryImpl(housesRepository, instantConverter, uuidConverter)
+
+    private val firebaseOptions = FirestoreOptions.getDefaultInstance().toBuilder()
+        .setProjectId("chores-326817")
+        .setCredentials(GoogleCredentials.getApplicationDefault())
+        .build()
+    private val firebaseDb = firebaseOptions.service
+
+    private val housesRepository = RemoteHousesRepository(firebaseDb, uuidConverter, instantConverter)
+    private val membersRepository = RemoteMembersRepository(firebaseDb, instantConverter, uuidConverter)
+    private val tasksRepository = RemoteTasksRepository(firebaseDb, housesRepository, instantConverter, uuidConverter)
     private val taskAssignmentsRepository =
-        TaskAssignmentsRepositoryImpl(tasksRepository, membersRepository, instantConverter, uuidConverter)
+        RemoteTaskAssignmentsRepository(firebaseDb, tasksRepository, membersRepository, instantConverter, uuidConverter)
     private val memberAssignmentsRepository =
-        MemberAssignmentsRepositoryImpl(membersRepository, housesRepository, uuidConverter)
+        RemoteMemberAssignmentsRepository(firebaseDb, membersRepository, housesRepository, uuidConverter)
     private val dummyRepository = DummyRepository(
         membersRepository,
         housesRepository,

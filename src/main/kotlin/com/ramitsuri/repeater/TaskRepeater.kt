@@ -120,10 +120,7 @@ class TaskRepeater(
             taskMember
         }
 
-        val originalDueDateTime = getZonedDateTime(task.dueDateTime, zoneId)
         val dueDateTime = newDateTime
-            .withHour(originalDueDateTime.hour)
-            .withMinute(originalDueDateTime.minute)
             .withSecond(0)
             .withNano(0)
         return TaskAssignment(

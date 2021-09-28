@@ -19,7 +19,13 @@ class RepeatSchedulerTest: BaseRepeaterTest() {
     @Before
     fun setUp() {
         taskRepeater =
-            TaskRepeater(tasksRepository, memberAssignmentsRepository, taskAssignmentsRepository, dispatcher)
+            TaskRepeater(
+                tasksRepository,
+                membersRepository,
+                memberAssignmentsRepository,
+                taskAssignmentsRepository,
+                dispatcher
+            )
     }
 
     @Test

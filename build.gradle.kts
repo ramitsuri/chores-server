@@ -34,6 +34,9 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.30.1")
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
 
+    // Firestore
+    implementation("com.google.cloud:google-cloud-firestore:3.0.5")
+
     // Logging
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("ch.qos.logback:logback-core:$logbackVersion")

@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 
 fun main() {
     val appContainer = AppContainer()
-    appContainer.getDatabase().init(Constants.DB_URL, Constants.DB_DRIVER)
+    //appContainer.getDatabase().init(Constants.DB_URL, Constants.DB_DRIVER)
     CoroutineScope(Dispatchers.Default).launch {
         appContainer.getTaskScheduler().schedule()
     }

@@ -1,4 +1,4 @@
-package com.ramitsuri.repository
+package com.ramitsuri.repository.local
 
 import com.ramitsuri.data.Converter
 import com.ramitsuri.data.DatabaseFactory.query
@@ -11,7 +11,7 @@ import org.jetbrains.exposed.sql.statements.InsertStatement
 import java.time.Instant
 import java.util.*
 
-class HousesRepositoryImpl(
+class LocalHousesRepository(
     private val uuidConverter: Converter<String, UUID>,
     private val instantConverter: Converter<Instant, String>
 ): HousesRepository {
