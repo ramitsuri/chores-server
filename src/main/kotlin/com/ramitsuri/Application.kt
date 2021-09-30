@@ -13,7 +13,7 @@ fun main() {
     CoroutineScope(Dispatchers.Default).launch {
         appContainer.getTaskScheduler().schedule()
     }
-    embeddedServer(appContainer.getApplicationEngine(), port = 8080, configure = {
+    embeddedServer(appContainer.getApplicationEngine(), port = 8081, configure = {
         connectionGroupSize = 2
         workerGroupSize = 5
         callGroupSize = 10
