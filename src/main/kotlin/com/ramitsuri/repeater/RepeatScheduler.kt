@@ -26,7 +26,7 @@ class RepeatScheduler(
             } else {
                 config.repeatType.beforeRunSleepDuration
             }
-            log.info("Delay duration is $delayDuration")
+            log.info("Delaying by $delayDuration")
             delay(delayDuration.toMillis())
         }
     }

@@ -5,6 +5,8 @@ import com.google.cloud.firestore.FirestoreOptions
 import com.ramitsuri.data.DatabaseFactory
 import com.ramitsuri.data.InstantConverter
 import com.ramitsuri.data.UuidConverter
+import com.ramitsuri.events.EventService
+import com.ramitsuri.events.GuavaEventService
 import com.ramitsuri.models.RepeatSchedulerConfig
 import com.ramitsuri.models.SchedulerRepeatType
 import com.ramitsuri.repeater.RepeatScheduler
@@ -42,6 +44,9 @@ class AppContainer {
         taskAssignmentsRepository
     )
 
+    private val eventService: EventService = GuavaEventService()
+    fun getEventService() = eventService
+
     fun getRoutes(): List<Routes> {
         return listOf(
             HouseRoutes(housesRepository),
@@ -60,6 +65,7 @@ class AppContainer {
     fun getTaskScheduler(): RepeatScheduler {
         val repeater =
             TaskRepeater(
+                eventService,
                 tasksRepository,
                 membersRepository,
                 memberAssignmentsRepository,

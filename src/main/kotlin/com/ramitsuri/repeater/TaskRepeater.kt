@@ -1,5 +1,7 @@
 package com.ramitsuri.repeater
 
+import com.ramitsuri.events.Event
+import com.ramitsuri.events.EventService
 import com.ramitsuri.extensions.Loggable
 import com.ramitsuri.extensions.isLaterThan
 import com.ramitsuri.models.*
@@ -14,6 +16,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class TaskRepeater(
+    private val eventService: EventService,
     private val tasksRepository: TasksRepository,
     private val membersRepository: MembersRepository,
     private val memberAssignmentsRepository: MemberAssignmentsRepository,
@@ -44,6 +47,9 @@ class TaskRepeater(
                 createType = newAssignment.createType,
                 dueDate = newAssignment.dueDateTime
             )
+        }
+        if (newAssignments.isNotEmpty()) {
+            eventService.post(Event.AssignmentsAdded(newAssignments))
         }
     }
 
