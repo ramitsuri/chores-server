@@ -14,6 +14,7 @@ import org.junit.Test
 import java.time.Instant
 import java.time.ZonedDateTime
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class TaskRepeaterTest: BaseRepeaterTest() {
@@ -230,7 +231,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
     }
 
     @Test
-    fun testStart_shouldAddNewAssignment_ifTaskRepeatOnCompleteAndMostRecentAssignmentsCompleted() {
+    fun testStart_shouldAddNewAssignment_ifTaskRepeatOnCompleteAndMostRecentAssignmentCompleted() {
         val taskDueDateTime = baseInstant
         val runDateTime = ZonedDateTime.ofInstant(baseInstant.minusSeconds(1), zoneId)
         runBlocking {
@@ -260,6 +261,76 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
             // Assert
             assertEquals(2, taskAssignmentsRepository.get().size)
+        }
+    }
+
+    @Test
+    fun testStart_shouldAddNewAssignmentOnlyOnce_ifTaskRepeatOnCompleteAndMostRecentAssignmentCompletedAndRepeaterRunMultipleTimes() {
+        val taskDueDateTime = baseInstant
+        val runDateTime = ZonedDateTime.ofInstant(baseInstant.plusSeconds(1), zoneId)
+        runBlocking {
+            // Arrange
+            addBasic()
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "Task1",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                RepeatUnit.ON_COMPLETE,
+                member1.id,
+                rotateMember = false
+            )
+            val task = tasksRepository.get()[0]
+
+            addAssignment(
+                progressStatus = ProgressStatus.DONE,
+                dueDate = taskDueDateTime,
+                createdDate = taskDueDateTime,
+                taskId = task.id,
+                memberId = member1.id
+            )
+
+            // Act
+            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.start(runDateTime, zoneId)
+
+            // Assert
+            assertEquals(2, taskAssignmentsRepository.get().size)
+        }
+    }
+
+    @Test
+    fun testStart_shouldAddNewAssignmentWithNewMember_ifTaskRepeatOnCompleteAndMostRecentAssignmentCompletedAndRotateMemberTrue() {
+        val taskDueDateTime = baseInstant
+        val runDateTime = ZonedDateTime.ofInstant(baseInstant.plusSeconds(1), zoneId)
+        runBlocking {
+            // Arrange
+            addBasic()
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "Task1",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                RepeatUnit.ON_COMPLETE,
+                member1.id,
+                rotateMember = true
+            )
+            val task = tasksRepository.get()[0]
+
+            addAssignment(
+                progressStatus = ProgressStatus.DONE,
+                dueDate = taskDueDateTime,
+                createdDate = taskDueDateTime,
+                taskId = task.id,
+                memberId = member1.id
+            )
+
+            // Act
+            taskRepeater.start(runDateTime, zoneId)
+
+            // Assert
+            val assignments = taskAssignmentsRepository.get()
+            assertNotEquals(assignments[0].member.id, assignments[1].member.id)
         }
     }
 

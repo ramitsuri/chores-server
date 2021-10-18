@@ -114,7 +114,8 @@ class TaskRepeater(
     ): TaskAssignment? {
         val mostRecentDueDateTime = getZonedDateTime(mostRecentAssignment.dueDateTime, zoneId)
         val mostRecentMemberId = mostRecentAssignment.member.id
-        val newDateTime = getNewTime(task.repeatValue, task.repeatUnit, mostRecentDueDateTime) ?: return null
+        val newDateTime =
+            getNewTime(task.repeatValue, task.repeatUnit, mostRecentDueDateTime, runDateTime) ?: return null
 
         if (!canRun(task, mostRecentAssignment.progressStatus, mostRecentDueDateTime, runDateTime)) {
             return null
@@ -126,7 +127,6 @@ class TaskRepeater(
         }
 
         val dueDateTime = newDateTime
-            .withSecond(0)
             .withNano(0)
         return TaskAssignment(
             id = "",
@@ -143,7 +143,8 @@ class TaskRepeater(
     private fun getNewTime(
         repeatValue: Int,
         repeatUnit: RepeatUnit,
-        mostRecentDueDateTime: ZonedDateTime
+        mostRecentDueDateTime: ZonedDateTime,
+        runDateTime: ZonedDateTime
     ): ZonedDateTime? {
         val repeatLong = repeatValue.toLong()
         return when (repeatUnit) {
@@ -163,7 +164,7 @@ class TaskRepeater(
                 mostRecentDueDateTime.plusYears(repeatLong)
             }
             RepeatUnit.ON_COMPLETE -> {
-                mostRecentDueDateTime
+                runDateTime
             }
             RepeatUnit.NONE -> {
                 null
