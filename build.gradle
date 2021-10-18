@@ -13,7 +13,7 @@ repositories {
 
 mainClassName = "com.ramitsuri.ApplicationKt"
 group = "com.ramitsuri"
-version = "0.0.1"
+version = "0.0.2"
 
 appengine {
     stage {

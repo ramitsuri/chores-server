@@ -12,6 +12,7 @@ import java.time.Instant
 import java.util.*
 
 class RemoteTasksRepository(
+    private val collection: String,
     private val db: Firestore,
     private val housesRepository: HousesRepository,
     private val instantConverter: Converter<Instant, String>,
@@ -19,7 +20,6 @@ class RemoteTasksRepository(
 ): TasksRepository, Loggable {
     override val log = logger()
 
-    private val collection = "Tasks"
     private val idColumn = "id"
     private val nameColumn = "name"
     private val descriptionColumn = "description"

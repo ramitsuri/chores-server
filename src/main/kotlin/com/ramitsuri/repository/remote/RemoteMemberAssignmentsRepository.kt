@@ -11,12 +11,12 @@ import com.ramitsuri.repository.interfaces.MembersRepository
 import java.util.*
 
 class RemoteMemberAssignmentsRepository(
+    private val collection: String,
     private val db: Firestore,
     private val membersRepository: MembersRepository,
     private val housesRepository: HousesRepository,
     private val uuidConverter: Converter<String, UUID>
 ): MemberAssignmentsRepository {
-    private val collection = "MemberAssignments"
     private val idColumn = "id"
     private val memberIdColumn = "memberId"
     private val houseIdColumn = "houseId"

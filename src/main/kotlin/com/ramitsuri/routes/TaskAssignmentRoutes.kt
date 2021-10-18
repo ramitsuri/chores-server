@@ -12,12 +12,15 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import java.time.Instant
 
-class TaskAssignmentRoutes(private val taskAssignmentsRepository: TaskAssignmentsRepository): Routes() {
+class TaskAssignmentRoutes(
+    private val baseRoute: String,
+    private val taskAssignmentsRepository: TaskAssignmentsRepository
+): Routes() {
 
     override fun register(application: Application) {
         val invalidIdParamError = getInvalidIdParamError()
         application.routing {
-            route("/task-assignments") {
+            route(baseRoute) {
 
                 // Get all
                 get {

@@ -1,6 +1,11 @@
 package com.ramitsuri.repeater
 
-import com.ramitsuri.models.*
+import com.ramitsuri.events.Event
+import com.ramitsuri.models.ActiveStatus
+import com.ramitsuri.models.CreateType
+import com.ramitsuri.models.ProgressStatus
+import com.ramitsuri.models.RepeatUnit
+import com.ramitsuri.testutils.TestEventsService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -15,11 +20,14 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
     private val dispatcher = Dispatchers.Default
     private val baseInstant = Instant.ofEpochMilli(1614618000000) // Mon Mar 01 2021 17:00:00 UTC
+    private lateinit var eventsService: TestEventsService
 
     @Before
     fun setUp() {
+        eventsService = TestEventsService()
         taskRepeater =
             TaskRepeater(
+                eventsService,
                 tasksRepository,
                 membersRepository,
                 memberAssignmentsRepository,
@@ -222,6 +230,40 @@ class TaskRepeaterTest: BaseRepeaterTest() {
     }
 
     @Test
+    fun testStart_shouldAddNewAssignment_ifTaskRepeatOnCompleteAndMostRecentAssignmentsCompleted() {
+        val taskDueDateTime = baseInstant
+        val runDateTime = ZonedDateTime.ofInstant(baseInstant.minusSeconds(1), zoneId)
+        runBlocking {
+            // Arrange
+            addBasic()
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "Task1",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                RepeatUnit.ON_COMPLETE,
+                member1.id,
+                rotateMember = false
+            )
+            val task = tasksRepository.get()[0]
+
+            addAssignment(
+                progressStatus = ProgressStatus.DONE,
+                dueDate = taskDueDateTime,
+                createdDate = taskDueDateTime,
+                taskId = task.id,
+                memberId = member1.id
+            )
+
+            // Act
+            taskRepeater.start(runDateTime, zoneId)
+
+            // Assert
+            assertEquals(2, taskAssignmentsRepository.get().size)
+        }
+    }
+
+    @Test
     fun testStart_shouldAddNewAssignmentWithSameMemberId_ifAssignmentsExistAndRotateMemberFalse() {
         val taskDueDateTime = baseInstant
         val runDateTime = ZonedDateTime.ofInstant(baseInstant.plusSeconds(24 * 3600), zoneId)
@@ -321,86 +363,38 @@ class TaskRepeaterTest: BaseRepeaterTest() {
         }
     }
 
-    /*  @Test
-      fun testStart_shouldAddOneNewAssignment_ifTaskHasNoAssignments() {
-          runBlocking {
-              addBasic()
-              addTask("Task1")
-              addAssignment()
-              val addDateTime = ZonedDateTime.now(zoneId)
-              taskRepeater.start(addDateTime, zoneId)
-              val taskAssignments = taskAssignmentsRepository.get()
-              assertEquals(1, taskAssignments.size)
-          }
-      }
+    @Test
+    fun testStart_shouldNotifyEventsService_ifNewTasksAdded() {
+        val taskDueDateTime = baseInstant
+        val runDateTime = ZonedDateTime.ofInstant(baseInstant.plusSeconds(24 * 3600), zoneId)
+        runBlocking {
+            // Arrange
+            addBasic()
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "Task1",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 12,
+                RepeatUnit.HOUR,
+                member1.id,
+                rotateMember = true
+            )
+            val task = tasksRepository.get()[0]
+            addAssignment(
+                dueDate = taskDueDateTime,
+                createdDate = taskDueDateTime,
+                taskId = task.id,
+                memberId = member1.id
+            )
 
-      @Test
-      fun testStart_shouldAddOneNewAssignment_ifTaskHasAssignmentsWithOldEnoughCreateDate_days() {
-          val addDateTime = ZonedDateTime.now(zoneId)
-          val previousCreateDate = addDateTime.minusDays(2).toInstant()
-          setup(
-              taskAssignment = TaskAssignment(
-                  "",
-                  ProgressStatus.TODO,
-                  Instant.now(),
-                  "",
-                  "",
-                  previousCreateDate,
-                  CreateType.MANUAL
-              )
-          )
-          runBlocking {
-              taskRepeater.start(addDateTime, zoneId)
-              val taskAssignments = taskAssignmentsRepository.get()
-              assertEquals(2, taskAssignments.size)
-          }
-      }
+            // Act
+            taskRepeater.start(runDateTime, zoneId)
 
-      @Test
-      fun testStart_shouldAddOneNewAssignment_ifTaskHasAssignmentsWithOldEnoughCreateDate_hours() {
-          val addDateTime = ZonedDateTime.now(zoneId)
-          val previousCreateDate = addDateTime.minusHours(2).toInstant()
-          setup(
-              taskAssignment = TaskAssignment(
-                  "",
-                  ProgressStatus.TODO,
-                  Instant.now(),
-                  "",
-                  "",
-                  previousCreateDate,
-                  CreateType.MANUAL
-              ),
-              taskRepeatUnit = RepeatUnit.HOUR
-          )
-          runBlocking {
-              taskRepeater.start(addDateTime, zoneId)
-              val taskAssignments = taskAssignmentsRepository.get()
-              assertEquals(2, taskAssignments.size)
-          }
-      }
-
-      @Test
-      fun testStart_shouldSetNextMember_ifTaskHasAssignments() {
-          val addDateTime = ZonedDateTime.now(zoneId)
-          val previousCreateDate = addDateTime.minusDays(2).toInstant()
-          setup(
-              taskAssignment = TaskAssignment(
-                  "",
-                  ProgressStatus.TODO,
-                  Instant.now(),
-                  "",
-                  "",
-                  previousCreateDate,
-                  CreateType.MANUAL
-              )
-          )
-          runBlocking {
-              taskRepeater.start(addDateTime, zoneId)
-              val taskAssignments = taskAssignmentsRepository.get()
-              assertNotEquals(taskAssignments[0]!!.memberId, taskAssignments[1]!!.memberId)
-              assertEquals(2, taskAssignments.size)
-          }
-      }*/
+            // Assert
+            assertEquals(1, eventsService.getEvents().size)
+            assertTrue(eventsService.getEvents()[0] is Event.AssignmentsAdded)
+        }
+    }
 
     private suspend fun addMember(name: String) {
         membersRepository.add(name, Instant.now())
@@ -436,9 +430,15 @@ class TaskRepeaterTest: BaseRepeaterTest() {
         )
     }
 
-    private suspend fun addAssignment(dueDate: Instant, createdDate: Instant, taskId: String, memberId: String) {
+    private suspend fun addAssignment(
+        dueDate: Instant,
+        createdDate: Instant,
+        taskId: String,
+        memberId: String,
+        progressStatus: ProgressStatus = ProgressStatus.TODO
+    ) {
         taskAssignmentsRepository.add(
-            ProgressStatus.TODO,
+            progressStatus,
             Instant.now(),
             taskId,
             memberId,
@@ -453,29 +453,4 @@ class TaskRepeaterTest: BaseRepeaterTest() {
         addMember("Member2")
         addHouseAndMemberAssignments("House1")
     }
-
-    /*private fun setup(
-        taskRepeatValue: Int = 1,
-        taskRepeatUnit: RepeatUnit = RepeatUnit.DAY,
-        taskAssignment: TaskAssignment? = null
-    ) {
-        runBlocking {
-            val member1 = membersRepository.add("Member1", Instant.now())
-            val member2 = membersRepository.add("Member2", Instant.now())
-            val house1 = housesRepository.add("House1", member1!!.id, Instant.now(), ActiveStatus.ACTIVE)
-            memberAssignmentsRepository.add(member1!!.id, house1!!.id)
-            memberAssignmentsRepository.add(member2!!.id, house1!!.id)
-            val task1 = tasksRepository.add("Task1", "Task1", taskRepeatValue, taskRepeatUnit, house1.id, Instant.now())
-            if (taskAssignment != null) {
-                taskAssignmentsRepository.add(
-                    taskAssignment.progressStatus,
-                    taskAssignment.progressStatusDate,
-                    task1!!.id,
-                    member1.id,
-                    taskAssignment.createdDate,
-                    taskAssignment.createType
-                )
-            }
-        }
-    }*/
 }

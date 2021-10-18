@@ -13,6 +13,9 @@ fun main() {
     CoroutineScope(Dispatchers.Default).launch {
         appContainer.getTaskScheduler().schedule()
     }
+    CoroutineScope(Dispatchers.Default).launch {
+        appContainer.getTestTaskScheduler().schedule()
+    }
     embeddedServer(appContainer.getApplicationEngine(), port = 8081, configure = {
         connectionGroupSize = 2
         workerGroupSize = 5

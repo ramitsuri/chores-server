@@ -12,11 +12,11 @@ import java.time.Instant
 import java.util.*
 
 class RemoteMembersRepository(
+    private val collection: String,
     private val db: Firestore,
     private val instantConverter: Converter<Instant, String>,
     private val uuidConverter: Converter<String, UUID>
 ): MembersRepository {
-    private val collection = "Members"
     private val idColumn = "id"
     private val nameColumn = "name"
     private val createdDateColumn = "createdDate"

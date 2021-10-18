@@ -29,13 +29,27 @@ class AppContainer {
         .build()
     private val firebaseDb = firebaseOptions.service
 
-    private val housesRepository = RemoteHousesRepository(firebaseDb, uuidConverter, instantConverter)
-    private val membersRepository = RemoteMembersRepository(firebaseDb, instantConverter, uuidConverter)
-    private val tasksRepository = RemoteTasksRepository(firebaseDb, housesRepository, instantConverter, uuidConverter)
+    private val housesRepository = RemoteHousesRepository("Houses", firebaseDb, uuidConverter, instantConverter)
+    private val membersRepository = RemoteMembersRepository("Members", firebaseDb, instantConverter, uuidConverter)
+    private val tasksRepository =
+        RemoteTasksRepository("Tasks", firebaseDb, housesRepository, instantConverter, uuidConverter)
     private val taskAssignmentsRepository =
-        RemoteTaskAssignmentsRepository(firebaseDb, tasksRepository, membersRepository, instantConverter, uuidConverter)
+        RemoteTaskAssignmentsRepository(
+            "TaskAssignments",
+            firebaseDb,
+            tasksRepository,
+            membersRepository,
+            instantConverter,
+            uuidConverter
+        )
     private val memberAssignmentsRepository =
-        RemoteMemberAssignmentsRepository(firebaseDb, membersRepository, housesRepository, uuidConverter)
+        RemoteMemberAssignmentsRepository(
+            "MemberAssignments",
+            firebaseDb,
+            membersRepository,
+            housesRepository,
+            uuidConverter
+        )
     private val dummyRepository = DummyRepository(
         membersRepository,
         housesRepository,
@@ -44,6 +58,19 @@ class AppContainer {
         taskAssignmentsRepository
     )
 
+    // For Test API
+    private val testTasksRepository =
+        RemoteTasksRepository("Test-Tasks", firebaseDb, housesRepository, instantConverter, uuidConverter)
+    private val testTaskAssignmentsRepository =
+        RemoteTaskAssignmentsRepository(
+            "Test-TaskAssignments",
+            firebaseDb,
+            testTasksRepository,
+            membersRepository,
+            instantConverter,
+            uuidConverter
+        )
+
     private val eventService: EventService = GuavaEventService()
     fun getEventService() = eventService
 
@@ -51,10 +78,12 @@ class AppContainer {
         return listOf(
             HouseRoutes(housesRepository),
             MemberRoutes(membersRepository),
-            TaskRoutes(tasksRepository, instantConverter),
-            TaskAssignmentRoutes(taskAssignmentsRepository),
+            TaskRoutes("/tasks", tasksRepository, instantConverter),
+            TaskAssignmentRoutes("/task-assignments", taskAssignmentsRepository),
             MemberAssignmentRoutes(memberAssignmentsRepository),
-            DummyRoutes(dummyRepository)
+            DummyRoutes(dummyRepository),
+            TaskRoutes("/test/tasks", testTasksRepository, instantConverter),
+            TaskAssignmentRoutes("/test/task-assignments", testTaskAssignmentsRepository)
         )
     }
 
@@ -70,6 +99,23 @@ class AppContainer {
                 membersRepository,
                 memberAssignmentsRepository,
                 taskAssignmentsRepository,
+                Dispatchers.Default
+            )
+        val config = RepeatSchedulerConfig(
+            repeatType = SchedulerRepeatType.MINUTE,
+            zoneId = ZoneId.of("UTC")
+        )
+        return RepeatScheduler(config, repeater)
+    }
+
+    fun getTestTaskScheduler(): RepeatScheduler {
+        val repeater =
+            TaskRepeater(
+                eventService,
+                testTasksRepository,
+                membersRepository,
+                memberAssignmentsRepository,
+                testTaskAssignmentsRepository,
                 Dispatchers.Default
             )
         val config = RepeatSchedulerConfig(

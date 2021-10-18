@@ -14,13 +14,17 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import java.time.Instant
 
-class TaskRoutes(private val tasksRepository: TasksRepository, private val instantConverter: InstantConverter):
+class TaskRoutes(
+    private val baseRoute: String,
+    private val tasksRepository: TasksRepository,
+    private val instantConverter: InstantConverter
+):
     Routes(), Loggable {
     override val log = logger()
     override fun register(application: Application) {
         val invalidIdParamError = getInvalidIdParamError()
         application.routing {
-            route("/tasks") {
+            route(baseRoute) {
 
                 // Get all
                 get {

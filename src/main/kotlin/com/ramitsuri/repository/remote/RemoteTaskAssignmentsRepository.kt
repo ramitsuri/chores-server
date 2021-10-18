@@ -11,13 +11,13 @@ import java.time.Instant
 import java.util.*
 
 class RemoteTaskAssignmentsRepository(
+    private val collection: String,
     private val db: Firestore,
     private val tasksRepository: TasksRepository,
     private val membersRepository: MembersRepository,
     private val instantConverter: Converter<Instant, String>,
     private val uuidConverter: Converter<String, UUID>
 ): TaskAssignmentsRepository {
-    private val collection = "TaskAssignments"
     private val idColumn = "id"
     private val statusTypeColumn = "statusType"
     private val statusDateColumn = "statusDate"

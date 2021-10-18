@@ -2,6 +2,7 @@ package com.ramitsuri.repeater
 
 import com.ramitsuri.models.RepeatSchedulerConfig
 import com.ramitsuri.models.SchedulerRepeatType
+import com.ramitsuri.testutils.TestEventsService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineDispatcher
@@ -20,6 +21,7 @@ class RepeatSchedulerTest: BaseRepeaterTest() {
     fun setUp() {
         taskRepeater =
             TaskRepeater(
+                TestEventsService(),
                 tasksRepository,
                 membersRepository,
                 memberAssignmentsRepository,

@@ -76,13 +76,11 @@ class TaskRepeater(
                 } else if (mostRecentAssignment == null) { // First ever assignment
                     getFirstAssignment(task, taskMember, runDateTime)
                 } else {
-                    val mostRecentDueDateTime = getZonedDateTime(mostRecentAssignment.dueDateTime, zoneId)
                     getRepeatAssignment(
                         task,
                         taskMember,
                         runDateTime,
-                        mostRecentDueDateTime,
-                        mostRecentAssignment.member.id,
+                        mostRecentAssignment,
                         zoneId
                     )
                 }
@@ -111,13 +109,14 @@ class TaskRepeater(
         task: Task,
         taskMember: Member,
         runDateTime: ZonedDateTime,
-        mostRecentDueDateTime: ZonedDateTime,
-        mostRecentMemberId: String,
+        mostRecentAssignment: TaskAssignment,
         zoneId: ZoneId
     ): TaskAssignment? {
+        val mostRecentDueDateTime = getZonedDateTime(mostRecentAssignment.dueDateTime, zoneId)
+        val mostRecentMemberId = mostRecentAssignment.member.id
         val newDateTime = getNewTime(task.repeatValue, task.repeatUnit, mostRecentDueDateTime) ?: return null
-        // We don't want to be adding a new assignment if the most recent assignment hasn't gone past due
-        if (!runDateTime.isLaterThan(mostRecentDueDateTime)) {
+
+        if (!canRun(task, mostRecentAssignment.progressStatus, mostRecentDueDateTime, runDateTime)) {
             return null
         }
         val newAssignmentMember = if (task.rotateMember) {
@@ -163,7 +162,10 @@ class TaskRepeater(
             RepeatUnit.YEAR -> {
                 mostRecentDueDateTime.plusYears(repeatLong)
             }
-            else -> {
+            RepeatUnit.ON_COMPLETE -> {
+                mostRecentDueDateTime
+            }
+            RepeatUnit.NONE -> {
                 null
             }
         }
@@ -183,5 +185,21 @@ class TaskRepeater(
 
     private fun getZonedDateTime(instant: Instant, zoneId: ZoneId): ZonedDateTime {
         return ZonedDateTime.ofInstant(instant, zoneId)
+    }
+
+    private fun canRun(
+        task: Task,
+        mostRecentProgressStatus: ProgressStatus,
+        mostRecentDueDateTime: ZonedDateTime,
+        runDateTime: ZonedDateTime
+    ): Boolean {
+        // New assignment for a task can only be created if it's of repeat type OnComplete and its most recent assignment
+        // was complete, or it's regular repeating type and run date time is later than most recent due date time.
+        val isTaskRepeatOnComplete = task.repeatUnit == RepeatUnit.ON_COMPLETE
+        return if (isTaskRepeatOnComplete) {
+            mostRecentProgressStatus == ProgressStatus.DONE
+        } else {
+            runDateTime.isLaterThan(mostRecentDueDateTime)
+        }
     }
 }
