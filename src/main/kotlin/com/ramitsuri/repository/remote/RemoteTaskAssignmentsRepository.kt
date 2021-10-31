@@ -105,20 +105,20 @@ class RemoteTaskAssignmentsRepository(
         }
     }
 
-    override suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): Int {
+    override suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): TaskAssignment? {
         val result = try {
             val map = mapOf<String, Any>(
                 statusTypeColumn to progressStatus.key,
                 statusDateColumn to instantConverter.toStorage(statusDate)
             )
-            db.collection(collection).document(id).update(map)
+            db.collection(collection).document(id).update(map).wait()
         } catch (e: Exception) {
             null
         }
         return if (result == null) {
-            0
+            null
         } else {
-            1
+            get(id)
         }
     }
 

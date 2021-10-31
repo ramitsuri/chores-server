@@ -45,14 +45,14 @@ class TestTaskAssignmentsRepository(
         }
     }
 
-    override suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): Int {
+    override suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): TaskAssignment? {
         val toEdit = storage[id]
         return toEdit?.let {
             val new = it.copy(progressStatus = progressStatus, progressStatusDate = statusDate)
             storage[id] = new
-            1
+            storage[id]
         } ?: run {
-            0
+            null
         }
     }
 

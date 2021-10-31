@@ -20,7 +20,7 @@ interface TaskAssignmentsRepository {
 
     suspend fun delete(id: String): Int
 
-    suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): Int
+    suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): TaskAssignment?
 
     suspend fun get(): List<TaskAssignment>
 

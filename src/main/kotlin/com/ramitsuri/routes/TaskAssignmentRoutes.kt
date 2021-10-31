@@ -79,8 +79,8 @@ class TaskAssignmentRoutes(
                         )
                     }
                     val result = taskAssignmentsRepository.edit(id, progressStatus, Instant.now())
-                    if (result == 1) {
-                        call.respond(HttpStatusCode.OK)
+                    if (result != null) {
+                        call.respond(result)
                     } else {
                         call.respond(HttpStatusCode.NotFound)
                     }

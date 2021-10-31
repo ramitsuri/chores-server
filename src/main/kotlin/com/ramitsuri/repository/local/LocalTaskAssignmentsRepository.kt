@@ -58,14 +58,15 @@ class LocalTaskAssignmentsRepository(
         }
     }
 
-    override suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): Int {
-        return DatabaseFactory.query {
+    override suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): TaskAssignment? {
+        DatabaseFactory.query {
             val uuid = uuidConverter.toStorage(id)
             TaskAssignments.update({TaskAssignments.id.eq(uuid)}) {taskAssignment ->
                 taskAssignment[TaskAssignments.statusDate] = instantConverter.toStorage(statusDate)
                 taskAssignment[TaskAssignments.statusType] = progressStatus.key
             }
         }
+        return get(id)
     }
 
     override suspend fun get(): List<TaskAssignment> {
