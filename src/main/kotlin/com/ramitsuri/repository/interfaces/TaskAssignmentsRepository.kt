@@ -24,5 +24,13 @@ interface TaskAssignmentsRepository {
 
     suspend fun get(): List<TaskAssignment>
 
+    suspend fun get(filter: TaskAssignmentFilter): List<TaskAssignment>
+
     suspend fun get(id: String): TaskAssignment?
 }
+
+data class TaskAssignmentFilter(
+    val memberId: String? = null,
+    val notMemberId: String? = null,
+    val progressStatus: ProgressStatus = ProgressStatus.UNKNOWN
+)

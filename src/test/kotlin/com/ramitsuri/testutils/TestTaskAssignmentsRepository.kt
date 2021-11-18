@@ -4,6 +4,7 @@ import com.ramitsuri.models.CreateType
 import com.ramitsuri.models.ProgressStatus
 import com.ramitsuri.models.TaskAssignment
 import com.ramitsuri.repository.interfaces.MembersRepository
+import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
 import java.time.Instant
@@ -58,6 +59,10 @@ class TestTaskAssignmentsRepository(
 
     override suspend fun get(): List<TaskAssignment> {
         return storage.values.toList()
+    }
+
+    override suspend fun get(filter: TaskAssignmentFilter): List<TaskAssignment> {
+        TODO("Not yet implemented")
     }
 
     override suspend fun get(id: String): TaskAssignment? {

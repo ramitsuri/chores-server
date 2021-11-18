@@ -4,6 +4,7 @@ import com.ramitsuri.models.Error
 import com.ramitsuri.models.ErrorCode
 import com.ramitsuri.models.ProgressStatus
 import com.ramitsuri.models.TaskAssignmentDto
+import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
 import io.ktor.application.*
 import io.ktor.http.*
@@ -15,7 +16,7 @@ import java.time.Instant
 class TaskAssignmentRoutes(
     private val baseRoute: String,
     private val taskAssignmentsRepository: TaskAssignmentsRepository
-): Routes() {
+) : Routes() {
 
     override fun register(application: Application) {
         val invalidIdParamError = getInvalidIdParamError()
@@ -25,6 +26,25 @@ class TaskAssignmentRoutes(
                 // Get all
                 get {
                     call.respond(taskAssignmentsRepository.get())
+                }
+
+                // Get for filter
+                get("filter") {
+                    val memberId = call.request.queryParameters["member"]
+                    val notMemberId = call.request.queryParameters["notmember"]
+                    val progressStatus = try {
+                        ProgressStatus.fromKey(
+                            call.request.queryParameters["progress"]?.toInt() ?: ProgressStatus.UNKNOWN.key
+                        )
+                    } catch (e: Exception) {
+                        ProgressStatus.UNKNOWN
+                    }
+                    val filter = TaskAssignmentFilter(
+                        memberId = memberId,
+                        notMemberId = notMemberId,
+                        progressStatus = progressStatus
+                    )
+                    call.respond(taskAssignmentsRepository.get(filter))
                 }
 
                 // Get by ID

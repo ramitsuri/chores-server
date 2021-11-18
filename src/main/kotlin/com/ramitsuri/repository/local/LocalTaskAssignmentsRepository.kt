@@ -3,6 +3,7 @@ package com.ramitsuri.repository.local
 import com.ramitsuri.data.*
 import com.ramitsuri.models.*
 import com.ramitsuri.repository.interfaces.MembersRepository
+import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
 import org.jetbrains.exposed.sql.*
@@ -83,6 +84,10 @@ class LocalTaskAssignmentsRepository(
                 }
             }
         }
+    }
+
+    override suspend fun get(filter: TaskAssignmentFilter): List<TaskAssignment> {
+        TODO("Not yet implemented")
     }
 
     override suspend fun get(id: String): TaskAssignment? {

@@ -1,10 +1,12 @@
 package com.ramitsuri.repository.remote
 
 import com.google.cloud.firestore.Firestore
+import com.google.cloud.firestore.Query
 import com.ramitsuri.data.Converter
 import com.ramitsuri.extensions.wait
 import com.ramitsuri.models.*
 import com.ramitsuri.repository.interfaces.MembersRepository
+import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
 import java.time.Instant
@@ -17,7 +19,7 @@ class RemoteTaskAssignmentsRepository(
     private val membersRepository: MembersRepository,
     private val instantConverter: Converter<Instant, String>,
     private val uuidConverter: Converter<String, UUID>
-): TaskAssignmentsRepository {
+) : TaskAssignmentsRepository {
     private val idColumn = "id"
     private val statusTypeColumn = "statusType"
     private val statusDateColumn = "statusDate"
@@ -137,8 +139,8 @@ class RemoteTaskAssignmentsRepository(
         } else {
             val list = mutableListOf<TaskAssignment>()
             for (document in result.documents) {
-                val member = members.firstOrNull {it.id == toMemberId(document.data)}
-                val task = tasks.firstOrNull {it.id == toTaskId(document.data)}
+                val member = members.firstOrNull { it.id == toMemberId(document.data) }
+                val task = tasks.firstOrNull { it.id == toTaskId(document.data) }
                 val taskAssignment = toTaskAssignment(document.data, task, member)
                 if (taskAssignment != null) {
                     list.add(taskAssignment)
@@ -146,6 +148,44 @@ class RemoteTaskAssignmentsRepository(
             }
             list
         }
+    }
+
+    override suspend fun get(filter: TaskAssignmentFilter): List<TaskAssignment> {
+        val members = membersRepository.get()
+        val tasks = tasksRepository.get()
+        val assignments = mutableListOf<TaskAssignment>()
+        try {
+            var repeat = true
+            while (repeat) {
+                var query: Query = db.collection(collection)
+                if (!filter.memberId.isNullOrEmpty()) {
+                    query = query.whereEqualTo(memberIdColumn, filter.memberId)
+                }
+                if (!filter.notMemberId.isNullOrEmpty() && filter.notMemberId != filter.memberId) {
+                    query = query.whereNotEqualTo(memberIdColumn, filter.notMemberId)
+                }
+                if (filter.progressStatus != ProgressStatus.UNKNOWN) {
+                    query = query.whereEqualTo(statusTypeColumn, filter.progressStatus.key)
+                }
+                val result = query
+                    .limit(25)
+                    .get()
+                    .wait()
+
+                repeat = !result.isEmpty
+                for (document in result.documents) {
+                    val member = members.firstOrNull { it.id == toMemberId(document.data) }
+                    val task = tasks.firstOrNull { it.id == toTaskId(document.data) }
+                    val taskAssignment = toTaskAssignment(document.data, task, member)
+                    if (taskAssignment != null) {
+                        assignments.add(taskAssignment)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Do nothing
+        }
+        return assignments
     }
 
     override suspend fun get(id: String): TaskAssignment? {
@@ -157,7 +197,7 @@ class RemoteTaskAssignmentsRepository(
         } catch (e: Exception) {
             null
         }
-        result?.data?.let {data ->
+        result?.data?.let { data ->
             val memberId = toMemberId(data) ?: return null
             val member = membersRepository.get(memberId)
             val taskId = toTaskId(data) ?: return null
