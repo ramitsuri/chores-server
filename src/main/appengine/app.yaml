@@ -1,2 +1,2 @@
 runtime: java11
-entrypoint: 'java -jar choresserver-0.0.4=5-all.jar'
+entrypoint: 'java -jar choresserver-0.0.6-all.jar'
