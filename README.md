@@ -26,3 +26,4 @@ java -jar choresserver-<version>-all.jar
 - Create YAML file for GitHub Workflow
 - Create Secrets for Project Id and JSON key that was downloaded earlier
 - Paste the contents of the json file as value for the secret
+- If gradle permission issue, run `git update-index --chmod=+x gradlew`
