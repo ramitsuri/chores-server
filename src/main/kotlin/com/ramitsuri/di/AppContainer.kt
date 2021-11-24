@@ -40,7 +40,7 @@ class AppContainer {
 
     private val tasksRepository = LocalTasksRepository(housesRepository, instantConverter, uuidConverter)
     private val remoteTasksRepository =
-        RemoteTasksRepository("Tasks", firebaseDb, housesRepository, instantConverter, uuidConverter)
+        RemoteTasksRepository("Tasks", firebaseDb, remoteHousesRepository, instantConverter, uuidConverter)
 
     private val taskAssignmentsRepository =
         LocalTaskAssignmentsRepository(
@@ -53,12 +53,11 @@ class AppContainer {
         RemoteTaskAssignmentsRepository(
             "TaskAssignments",
             firebaseDb,
-            tasksRepository,
-            membersRepository,
+            remoteTasksRepository,
+            remoteMembersRepository,
             instantConverter,
             uuidConverter
         )
-
 
     private val memberAssignmentsRepository =
         LocalMemberAssignmentsRepository(
@@ -70,8 +69,8 @@ class AppContainer {
         RemoteMemberAssignmentsRepository(
             "MemberAssignments",
             firebaseDb,
-            membersRepository,
-            housesRepository,
+            remoteMembersRepository,
+            remoteHousesRepository,
             uuidConverter
         )
 
