@@ -9,14 +9,12 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.sql.Connection
 import java.util.*
 
 object DatabaseFactory {
-    fun init(url: String, driver: String) {
-        TransactionManager.manager.defaultIsolationLevel =
-            Connection.TRANSACTION_SERIALIZABLE
-        val database = connect(url, driver)
+    fun init(url: String, driver: String, username: String = "", password: String = "") {
+
+        val database = connect(url, driver, username, password)
         TransactionManager.defaultDatabase = database
 
         transaction {
@@ -53,24 +51,24 @@ object DatabaseFactory {
     }
 }
 
-object Houses: UUIDTable() {
+object Houses : UUIDTable() {
     val name: Column<String> = varchar("name", 50)
     val createdByMemberId: Column<UUID> = uuid("memberId").references(Members.id)
     val createdDate: Column<String> = varchar("createdDate", 50)
     val activeStatus: Column<Int> = integer("activeStatus")
 }
 
-object Members: UUIDTable() {
+object Members : UUIDTable() {
     val name: Column<String> = varchar("name", 50)
     val createdDate: Column<String> = varchar("createdDate", 50)
 }
 
-object MemberAssignments: UUIDTable() {
+object MemberAssignments : UUIDTable() {
     val memberId: Column<UUID> = uuid("memberId").references(Members.id)
     val houseId: Column<UUID> = uuid("houseId").references(Houses.id)
 }
 
-object Tasks: UUIDTable() {
+object Tasks : UUIDTable() {
     val name: Column<String> = varchar("name", 50)
     val description: Column<String> = varchar("description", 250)
     val dueDate: Column<String> = varchar("dueDate", 50)
@@ -82,7 +80,7 @@ object Tasks: UUIDTable() {
     val createdDate: Column<String> = varchar("createdDate", 50)
 }
 
-object TaskAssignments: UUIDTable() {
+object TaskAssignments : UUIDTable() {
     val statusType: Column<Int> = integer("statusType")
     val statusDate: Column<String> = varchar("statusDate", 50)
     val taskId: Column<UUID> = uuid("taskId").references(Tasks.id)

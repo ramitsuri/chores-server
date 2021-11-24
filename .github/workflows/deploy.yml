@@ -17,6 +17,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Add environment vars from secrets
+        run: |
+          echo "  DB_URL1: ${{ secrets.URL1 }}" >> src/main/appengine/app.yaml
+          echo "  DB_URL2: ${{ secrets.URL2 }}" >> src/main/appengine/app.yaml
+          echo "  DB_URL3: ${{ secrets.URL3 }}" >> src/main/appengine/app.yaml
+
+      - name: Check environment vars
+        run: >
+          cat src/main/appengine/app.yaml
+
       - name: Setup GCP Service Account
         uses: google-github-actions/setup-gcloud@master
         with:

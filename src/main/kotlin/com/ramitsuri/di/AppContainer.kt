@@ -1,7 +1,5 @@
 package com.ramitsuri.di
 
-import com.google.auth.oauth2.GoogleCredentials
-import com.google.cloud.firestore.FirestoreOptions
 import com.ramitsuri.data.DatabaseFactory
 import com.ramitsuri.data.InstantConverter
 import com.ramitsuri.data.UuidConverter
@@ -11,7 +9,7 @@ import com.ramitsuri.models.RepeatSchedulerConfig
 import com.ramitsuri.models.SchedulerRepeatType
 import com.ramitsuri.repeater.RepeatScheduler
 import com.ramitsuri.repeater.TaskRepeater
-import com.ramitsuri.repository.remote.*
+import com.ramitsuri.repository.local.*
 import com.ramitsuri.routes.*
 import com.ramitsuri.utils.DummyRepository
 import io.ktor.server.engine.*
@@ -23,29 +21,18 @@ class AppContainer {
     private val uuidConverter = UuidConverter()
     private val instantConverter = InstantConverter()
 
-    private val firebaseOptions = FirestoreOptions.getDefaultInstance().toBuilder()
-        .setProjectId("chores-326817")
-        .setCredentials(GoogleCredentials.getApplicationDefault())
-        .build()
-    private val firebaseDb = firebaseOptions.service
-
-    private val housesRepository = RemoteHousesRepository("Houses", firebaseDb, uuidConverter, instantConverter)
-    private val membersRepository = RemoteMembersRepository("Members", firebaseDb, instantConverter, uuidConverter)
-    private val tasksRepository =
-        RemoteTasksRepository("Tasks", firebaseDb, housesRepository, instantConverter, uuidConverter)
+    private val housesRepository = LocalHousesRepository(uuidConverter, instantConverter)
+    private val membersRepository = LocalMembersRepository(instantConverter, uuidConverter)
+    private val tasksRepository = LocalTasksRepository(housesRepository, instantConverter, uuidConverter)
     private val taskAssignmentsRepository =
-        RemoteTaskAssignmentsRepository(
-            "TaskAssignments",
-            firebaseDb,
+        LocalTaskAssignmentsRepository(
             tasksRepository,
             membersRepository,
             instantConverter,
             uuidConverter
         )
     private val memberAssignmentsRepository =
-        RemoteMemberAssignmentsRepository(
-            "MemberAssignments",
-            firebaseDb,
+        LocalMemberAssignmentsRepository(
             membersRepository,
             housesRepository,
             uuidConverter
@@ -60,11 +47,9 @@ class AppContainer {
 
     // For Test API
     private val testTasksRepository =
-        RemoteTasksRepository("Test-Tasks", firebaseDb, housesRepository, instantConverter, uuidConverter)
+        LocalTasksRepository(housesRepository, instantConverter, uuidConverter)
     private val testTaskAssignmentsRepository =
-        RemoteTaskAssignmentsRepository(
-            "Test-TaskAssignments",
-            firebaseDb,
+        LocalTaskAssignmentsRepository(
             testTasksRepository,
             membersRepository,
             instantConverter,
@@ -82,8 +67,8 @@ class AppContainer {
             TaskAssignmentRoutes("/task-assignments", taskAssignmentsRepository),
             MemberAssignmentRoutes(memberAssignmentsRepository),
             DummyRoutes(dummyRepository),
-            TaskRoutes("/test/tasks", testTasksRepository, instantConverter),
-            TaskAssignmentRoutes("/test/task-assignments", testTaskAssignmentsRepository)
+            //TaskRoutes("/test/tasks", testTasksRepository, instantConverter),
+            //TaskAssignmentRoutes("/test/task-assignments", testTaskAssignmentsRepository)
         )
     }
 
