@@ -14,10 +14,10 @@ import kotlinx.coroutines.launch
 fun main() {
     val appContainer = AppContainer()
     appContainer.getDatabase().init(getDbUrl(), getDbDriver(), getDbUsername(), getDbPassword())
-    CoroutineScope(Dispatchers.Default).launch {
+    /*CoroutineScope(Dispatchers.Default).launch {
         appContainer.getTaskScheduler().schedule()
     }
-    /*CoroutineScope(Dispatchers.Default).launch {
+    CoroutineScope(Dispatchers.Default).launch {
         appContainer.getTestTaskScheduler().schedule()
     }*/
     embeddedServer(appContainer.getApplicationEngine(), port = 8081, configure = {

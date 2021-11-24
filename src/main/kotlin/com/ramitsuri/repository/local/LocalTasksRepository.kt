@@ -10,6 +10,7 @@ import com.ramitsuri.repository.interfaces.HousesRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.InsertStatement
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 import java.util.*
 
@@ -19,6 +20,32 @@ class LocalTasksRepository(
     private val uuidConverter: Converter<String, UUID>
 ): TasksRepository, Loggable {
     override val log = logger()
+
+    fun add(tasks: List<Task>) {
+        transaction {
+            for (taskToInsert in tasks) {
+                Tasks.insert { task ->
+                    task[id] = uuidConverter.toStorage(taskToInsert.id)
+                    task[Tasks.name] = taskToInsert.name
+                    task[Tasks.description] = taskToInsert.description
+                    task[Tasks.dueDate] = instantConverter.toStorage(taskToInsert.dueDateTime)
+                    task[Tasks.repeatValue] = taskToInsert.repeatValue
+                    task[Tasks.repeatUnit] = taskToInsert.repeatUnit.key
+                    task[Tasks.houseId] = uuidConverter.toStorage(taskToInsert.houseId)
+                    task[Tasks.memberId] = uuidConverter.toStorage(taskToInsert.memberId)
+                    task[Tasks.rotateMember] = taskToInsert.rotateMember
+                    task[Tasks.createdDate] = instantConverter.toStorage(taskToInsert.createdDate)
+                }
+            }
+        }
+    }
+
+    suspend fun rows() : Int {
+        return query {
+            Tasks.selectAll().count().toInt()
+        }
+    }
+
     override suspend fun add(
         name: String,
         description: String,

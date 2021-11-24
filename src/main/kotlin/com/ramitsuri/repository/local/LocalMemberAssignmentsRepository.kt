@@ -10,20 +10,41 @@ import com.ramitsuri.repository.interfaces.MemberAssignmentsRepository
 import com.ramitsuri.repository.interfaces.MembersRepository
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.InsertStatement
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
 class LocalMemberAssignmentsRepository(
     private val membersRepository: MembersRepository,
     private val housesRepository: HousesRepository,
     private val uuidConverter: Converter<String, UUID>
-): MemberAssignmentsRepository {
+) : MemberAssignmentsRepository {
+
+    fun add(memberAssignments: List<MemberAssignment>) {
+        transaction {
+            for (memberAssignmentToInsert in memberAssignments) {
+                MemberAssignments.insert { memberAssignment ->
+                    memberAssignment[MemberAssignments.id] = uuidConverter.toStorage(memberAssignmentToInsert.id)
+                    memberAssignment[MemberAssignments.memberId] =
+                        uuidConverter.toStorage(memberAssignmentToInsert.member.id)
+                    memberAssignment[MemberAssignments.houseId] =
+                        uuidConverter.toStorage(memberAssignmentToInsert.houseId)
+                }
+            }
+        }
+    }
+
+    suspend fun rows(): Int {
+        return DatabaseFactory.query {
+            MemberAssignments.selectAll().count().toInt()
+        }
+    }
 
     override suspend fun add(memberId: String, houseId: String): MemberAssignment? {
         val member = membersRepository.get(memberId) ?: return null
         housesRepository.get(houseId) ?: return null
         var statement: InsertStatement<Number>? = null
         DatabaseFactory.query {
-            statement = MemberAssignments.insert {memberAssignment ->
+            statement = MemberAssignments.insert { memberAssignment ->
                 memberAssignment[MemberAssignments.memberId] = uuidConverter.toStorage(memberId)
                 memberAssignment[MemberAssignments.houseId] = uuidConverter.toStorage(houseId)
             }
@@ -43,15 +64,15 @@ class LocalMemberAssignmentsRepository(
     override suspend fun delete(id: String): Int {
         return DatabaseFactory.query {
             val uuid = uuidConverter.toStorage(id)
-            MemberAssignments.deleteWhere {MemberAssignments.id.eq(uuid)}
+            MemberAssignments.deleteWhere { MemberAssignments.id.eq(uuid) }
         }
     }
 
     override suspend fun get(): List<MemberAssignment> {
         val members = membersRepository.get()
         return DatabaseFactory.query {
-            MemberAssignments.selectAll().filterNotNull().mapNotNull {row ->
-                val member = members.firstOrNull {it.id == rowToMemberId(row)}
+            MemberAssignments.selectAll().filterNotNull().mapNotNull { row ->
+                val member = members.firstOrNull { it.id == rowToMemberId(row) }
                 if (member != null) {
                     rowToMemberAssignment(row, member)
                 } else {
@@ -64,7 +85,7 @@ class LocalMemberAssignmentsRepository(
     override suspend fun get(id: String): MemberAssignment? {
         val resultRow = DatabaseFactory.query {
             val uuid = uuidConverter.toStorage(id)
-            MemberAssignments.select {MemberAssignments.id.eq(uuid)}.singleOrNull()
+            MemberAssignments.select { MemberAssignments.id.eq(uuid) }.singleOrNull()
         } ?: return null
         val member = membersRepository.get(rowToMemberId(resultRow)) ?: return null
         return rowToMemberAssignment(resultRow, member)
@@ -74,8 +95,8 @@ class LocalMemberAssignmentsRepository(
         val members = membersRepository.get()
         return DatabaseFactory.query {
             val uuid = uuidConverter.toStorage(houseId)
-            MemberAssignments.select {MemberAssignments.houseId.eq(uuid)}.filterNotNull().mapNotNull {row ->
-                val member = members.firstOrNull {it.id == rowToMemberId(row)}
+            MemberAssignments.select { MemberAssignments.houseId.eq(uuid) }.filterNotNull().mapNotNull { row ->
+                val member = members.firstOrNull { it.id == rowToMemberId(row) }
                 if (member != null) {
                     rowToMemberAssignment(row, member)
                 } else {

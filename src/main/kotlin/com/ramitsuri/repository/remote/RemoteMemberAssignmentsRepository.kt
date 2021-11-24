@@ -16,10 +16,21 @@ class RemoteMemberAssignmentsRepository(
     private val membersRepository: MembersRepository,
     private val housesRepository: HousesRepository,
     private val uuidConverter: Converter<String, UUID>
-): MemberAssignmentsRepository {
+) : MemberAssignmentsRepository {
     private val idColumn = "id"
     private val memberIdColumn = "memberId"
     private val houseIdColumn = "houseId"
+
+    suspend fun rows(): Int {
+        val result = try {
+            db.collection(collection)
+                .get()
+                .wait()
+        } catch (e: Exception) {
+            null
+        }
+        return result?.documents?.size ?: 0
+    }
 
     override suspend fun add(memberId: String, houseId: String): MemberAssignment? {
         val member = membersRepository.get(memberId) ?: return null
@@ -100,7 +111,7 @@ class RemoteMemberAssignmentsRepository(
         } else {
             val list = mutableListOf<MemberAssignment>()
             for (document in result.documents) {
-                val member = members.firstOrNull {it.id == toMemberId(document.data)}
+                val member = members.firstOrNull { it.id == toMemberId(document.data) }
                 val memberAssignment = toMemberAssignment(document.data, member)
                 if (memberAssignment != null) {
                     list.add(memberAssignment)
@@ -119,7 +130,7 @@ class RemoteMemberAssignmentsRepository(
         } catch (e: Exception) {
             null
         }
-        result?.data?.let {data ->
+        result?.data?.let { data ->
             val memberId = toMemberId(data) ?: return null
             val member = membersRepository.get(memberId)
             return toMemberAssignment(data, member)
@@ -142,7 +153,7 @@ class RemoteMemberAssignmentsRepository(
         } else {
             val list = mutableListOf<MemberAssignment>()
             for (document in result.documents) {
-                val member = members.firstOrNull {it.id == toMemberId(document.data)}
+                val member = members.firstOrNull { it.id == toMemberId(document.data) }
                 val memberAssignment = toMemberAssignment(document.data, member)
                 if (memberAssignment != null) {
                     list.add(memberAssignment)

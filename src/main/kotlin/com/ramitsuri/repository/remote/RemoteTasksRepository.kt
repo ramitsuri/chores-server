@@ -17,7 +17,7 @@ class RemoteTasksRepository(
     private val housesRepository: HousesRepository,
     private val instantConverter: Converter<Instant, String>,
     private val uuidConverter: Converter<String, UUID>
-): TasksRepository, Loggable {
+) : TasksRepository, Loggable {
     override val log = logger()
 
     private val idColumn = "id"
@@ -30,6 +30,17 @@ class RemoteTasksRepository(
     private val memberIdColumn = "memberId"
     private val rotateMemberColumn = "rotateMember"
     private val createdDateColumn = "createdDate"
+
+    suspend fun rows(): Int {
+        val result = try {
+            db.collection(collection)
+                .get()
+                .wait()
+        } catch (e: Exception) {
+            null
+        }
+        return result?.documents?.size ?: 0
+    }
 
     override suspend fun add(
         name: String,
