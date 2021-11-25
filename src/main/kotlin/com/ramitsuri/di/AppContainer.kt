@@ -102,6 +102,7 @@ class AppContainer {
             MemberRoutes(membersRepository),
             TaskRoutes("/tasks", tasksRepository, instantConverter),
             TaskAssignmentRoutes("/task-assignments", taskAssignmentsRepository),
+            TaskAssignmentRoutes("/remote-task-assignments", remoteTaskAssignmentsRepository),
             MemberAssignmentRoutes(memberAssignmentsRepository),
             DummyRoutes(dummyRepository),
             //TaskRoutes("/test/tasks", testTasksRepository, instantConverter),
