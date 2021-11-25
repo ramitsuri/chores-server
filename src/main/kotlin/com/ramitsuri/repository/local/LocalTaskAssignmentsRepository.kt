@@ -1,12 +1,16 @@
 package com.ramitsuri.repository.local
 
-import com.ramitsuri.data.*
+import com.ramitsuri.data.Converter
+import com.ramitsuri.data.DatabaseFactory
+import com.ramitsuri.data.TaskAssignments
 import com.ramitsuri.models.*
 import com.ramitsuri.repository.interfaces.MembersRepository
 import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.statements.InsertStatement
 import java.time.Instant
 import java.util.*
@@ -16,7 +20,7 @@ class LocalTaskAssignmentsRepository(
     private val membersRepository: MembersRepository,
     private val instantConverter: Converter<Instant, String>,
     private val uuidConverter: Converter<String, UUID>
-): TaskAssignmentsRepository {
+) : TaskAssignmentsRepository {
     override suspend fun add(
         progressStatus: ProgressStatus,
         statusDate: Instant,
@@ -30,7 +34,7 @@ class LocalTaskAssignmentsRepository(
         val member = membersRepository.get(memberId) ?: return null
         var statement: InsertStatement<Number>? = null
         DatabaseFactory.query {
-            statement = TaskAssignments.insert {taskAssignment ->
+            statement = TaskAssignments.insert { taskAssignment ->
                 taskAssignment[TaskAssignments.statusType] = progressStatus.key
                 taskAssignment[TaskAssignments.statusDate] = instantConverter.toStorage(statusDate)
                 taskAssignment[TaskAssignments.taskId] = uuidConverter.toStorage(taskId)
@@ -55,14 +59,14 @@ class LocalTaskAssignmentsRepository(
     override suspend fun delete(id: String): Int {
         return DatabaseFactory.query {
             val uuid = uuidConverter.toStorage(id)
-            TaskAssignments.deleteWhere {TaskAssignments.id.eq(uuid)}
+            TaskAssignments.deleteWhere { TaskAssignments.id.eq(uuid) }
         }
     }
 
     override suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): TaskAssignment? {
         DatabaseFactory.query {
             val uuid = uuidConverter.toStorage(id)
-            TaskAssignments.update({TaskAssignments.id.eq(uuid)}) {taskAssignment ->
+            TaskAssignments.update({ TaskAssignments.id.eq(uuid) }) { taskAssignment ->
                 taskAssignment[TaskAssignments.statusDate] = instantConverter.toStorage(statusDate)
                 taskAssignment[TaskAssignments.statusType] = progressStatus.key
             }
@@ -74,9 +78,9 @@ class LocalTaskAssignmentsRepository(
         val members = membersRepository.get()
         val tasks = tasksRepository.get()
         return DatabaseFactory.query {
-            TaskAssignments.selectAll().filterNotNull().mapNotNull {row ->
-                val member = members.firstOrNull {it.id == rowToMemberId(row)}
-                val task = tasks.firstOrNull {it.id == rowToTaskId(row)}
+            TaskAssignments.selectAll().filterNotNull().mapNotNull { row ->
+                val member = members.firstOrNull { it.id == rowToMemberId(row) }
+                val task = tasks.firstOrNull { it.id == rowToTaskId(row) }
                 if (member != null && task != null) {
                     rowToTaskAssignment(row, member, task)
                 } else {
@@ -87,13 +91,39 @@ class LocalTaskAssignmentsRepository(
     }
 
     override suspend fun get(filter: TaskAssignmentFilter): List<TaskAssignment> {
-        TODO("Not yet implemented")
+        val members = membersRepository.get()
+        val tasks = tasksRepository.get()
+        return DatabaseFactory.query {
+            var query = TaskAssignments
+                .selectAll()
+            filter.memberId?.let {
+                val condition = TaskAssignments.memberId eq uuidConverter.toStorage(it)
+                query = query.andWhere { condition }
+            }
+            if (filter.notMemberId != null && filter.notMemberId != filter.memberId) {
+                val condition = TaskAssignments.memberId neq uuidConverter.toStorage(filter.notMemberId)
+                query = query.andWhere { condition }
+            }
+            if (filter.progressStatus != ProgressStatus.UNKNOWN) {
+                val condition = TaskAssignments.statusType eq filter.progressStatus.key
+                query = query.andWhere { condition }
+            }
+            query.filterNotNull().mapNotNull { row ->
+                val member = members.firstOrNull { it.id == rowToMemberId(row) }
+                val task = tasks.firstOrNull { it.id == rowToTaskId(row) }
+                if (member != null && task != null) {
+                    rowToTaskAssignment(row, member, task)
+                } else {
+                    null
+                }
+            }
+        }
     }
 
     override suspend fun get(id: String): TaskAssignment? {
         val resultRow = DatabaseFactory.query {
             val uuid = uuidConverter.toStorage(id)
-            TaskAssignments.select {TaskAssignments.id.eq(uuid)}.singleOrNull()
+            TaskAssignments.select { TaskAssignments.id.eq(uuid) }.singleOrNull()
         } ?: return null
         val member = membersRepository.get(rowToMemberId(resultRow)) ?: return null
         val task = tasksRepository.get(rowToTaskId(resultRow)) ?: return null

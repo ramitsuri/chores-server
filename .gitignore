@@ -139,3 +139,5 @@ hs_err_pid*
 build/
 
 /data/
+
+/src/main/resources/env.properties

@@ -13,7 +13,7 @@ repositories {
 
 mainClassName = "com.ramitsuri.ApplicationKt"
 group = "com.ramitsuri"
-version = "0.0.6"
+version = "0.0.7"
 
 appengine {
     stage {
@@ -42,9 +42,6 @@ dependencies {
 
     // Event bus
     implementation ("com.google.guava:guava-gwt:31.0.1-jre")
-
-    // Firestore
-    implementation("com.google.cloud:google-cloud-firestore:3.0.5")
 
     // Logging
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
