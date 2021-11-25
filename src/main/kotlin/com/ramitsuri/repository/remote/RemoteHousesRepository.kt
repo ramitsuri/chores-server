@@ -14,23 +14,12 @@ class RemoteHousesRepository(
     private val db: Firestore,
     private val uuidConverter: Converter<String, UUID>,
     private val instantConverter: Converter<Instant, String>
-) : HousesRepository {
+): HousesRepository {
     private val idColumn = "id"
     private val nameColumn = "name"
     private val memberIdColumn = "memberId"
     private val createdDateColumn = "createdDate"
     private val activeStatusColumn = "activeStatus"
-
-    suspend fun rows(): Int {
-        val result = try {
-            db.collection(collection)
-                .get()
-                .wait()
-        } catch (e: Exception) {
-            null
-        }
-        return result?.documents?.size ?: 0
-    }
 
     override suspend fun add(
         name: String,

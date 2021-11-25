@@ -2,7 +2,10 @@ package com.ramitsuri.repository.remote
 
 import com.google.cloud.firestore.Firestore
 import com.ramitsuri.data.Converter
+import com.ramitsuri.data.Houses.createdByMemberId
 import com.ramitsuri.extensions.wait
+import com.ramitsuri.models.ActiveStatus
+import com.ramitsuri.models.House
 import com.ramitsuri.models.Member
 import com.ramitsuri.repository.interfaces.MembersRepository
 import java.time.Instant
@@ -13,21 +16,10 @@ class RemoteMembersRepository(
     private val db: Firestore,
     private val instantConverter: Converter<Instant, String>,
     private val uuidConverter: Converter<String, UUID>
-) : MembersRepository {
+): MembersRepository {
     private val idColumn = "id"
     private val nameColumn = "name"
     private val createdDateColumn = "createdDate"
-
-    suspend fun rows(): Int {
-        val result = try {
-            db.collection(collection)
-                .get()
-                .wait()
-        } catch (e: Exception) {
-            null
-        }
-        return result?.documents?.size ?: 0
-    }
 
     override suspend fun add(name: String, createdDate: Instant): Member? {
         val id = uuidConverter.toMain(UUID.randomUUID())

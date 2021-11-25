@@ -29,17 +29,6 @@ class RemoteTaskAssignmentsRepository(
     private val createdDateColumn = "createdDate"
     private val createTypeColumn = "createType"
 
-    suspend fun rows(): Int {
-        val result = try {
-            db.collection(collection)
-                .get()
-                .wait()
-        } catch (e: Exception) {
-            null
-        }
-        return result?.documents?.size ?: 0
-    }
-
     override suspend fun add(
         progressStatus: ProgressStatus,
         statusDate: Instant,

@@ -8,7 +8,6 @@ import com.ramitsuri.models.House
 import com.ramitsuri.repository.interfaces.HousesRepository
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.InsertStatement
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 import java.util.*
 
@@ -16,26 +15,6 @@ class LocalHousesRepository(
     private val uuidConverter: Converter<String, UUID>,
     private val instantConverter: Converter<Instant, String>
 ): HousesRepository {
-    fun add(houses: List<House>) {
-        transaction {
-            for (houseToInsert in houses) {
-                Houses.insert { house ->
-                    house[id] = uuidConverter.toStorage(houseToInsert.id)
-                    house[name] = houseToInsert.name
-                    house[createdByMemberId] = uuidConverter.toStorage(houseToInsert.createdByMemberId)
-                    house[createdDate] = instantConverter.toStorage(houseToInsert.createdDate)
-                    house[activeStatus] = houseToInsert.status.key
-                }
-            }
-        }
-    }
-
-    suspend fun rows() : Int {
-        return query {
-            Houses.selectAll().count().toInt()
-        }
-    }
-
     override suspend fun add(
         name: String,
         createdByMemberId: String,
