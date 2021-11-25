@@ -19,9 +19,10 @@ jobs:
 
       - name: Add environment vars from secrets
         run: |
-          echo "  DB_URL1: ${{ secrets.URL1 }}" >> src/main/appengine/app.yaml
-          echo "  DB_URL2: ${{ secrets.URL2 }}" >> src/main/appengine/app.yaml
-          echo "  DB_URL3: ${{ secrets.URL3 }}" >> src/main/appengine/app.yaml
+          echo "  DB_URL: ${{ secrets.DB_URL }}" >> src/main/appengine/app.yaml
+          echo "  DB_DRIVER: ${{ secrets.DB_DRIVER }}" >> src/main/appengine/app.yaml
+          echo "  DB_USERNAME: ${{ secrets.DB_USERNAME }}" >> src/main/appengine/app.yaml
+          echo "  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}" >> src/main/appengine/app.yaml
 
       - name: Check environment vars
         run: >
