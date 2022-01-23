@@ -1,4 +1,7 @@
 # Chores Server
+
+[![Deploy](https://github.com/ramitsuri/chores-server/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/ramitsuri/chores-server/actions/workflows/deploy.yml)
+
 Backend server for the [Chores app](https://github.com/ramitsuri/chores-client) written in Kotlin (JVM) with PostgreSQL server.
 
 ## To deploy to GCP
