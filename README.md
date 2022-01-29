@@ -4,6 +4,13 @@
 
 Backend server for the [Chores app](https://github.com/ramitsuri/chores-client) written in Kotlin (JVM) with PostgreSQL server.
 
+## Creating a new release
+- When ready to release a new version, update the version in `build.gradle`
+- Update `entrypoint` value in `src/main/appengine/app.yaml` to correspond to the new version
+- Commit code 
+- Tag the commit in the format `v<version>`
+- Push the tag. GitHub Actions will auto deploy the app
+
 ## To deploy to GCP
 ```
 ./gradlew appengineDeploy
