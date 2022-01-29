@@ -2,6 +2,7 @@ package com.ramitsuri.data
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Database.Companion.connect
@@ -38,7 +39,8 @@ object DatabaseFactory {
             Members,
             MemberAssignments,
             Tasks,
-            TaskAssignments
+            TaskAssignments,
+            RunTimeLogs
         )
     }
 
@@ -88,4 +90,8 @@ object TaskAssignments : UUIDTable() {
     val dueDate: Column<String> = varchar("dueDate", 50)
     val createdDate: Column<String> = varchar("createdDate", 50)
     val createType: Column<Int> = integer("createType")
+}
+
+object RunTimeLogs: IntIdTable() {
+    val runTime: Column<String> = varchar("runDate", 50)
 }

@@ -90,24 +90,7 @@ class AppContainer {
             repeatType = SchedulerRepeatType.HOUR,
             zoneId = ZoneId.of("UTC")
         )
-        return RepeatScheduler(config, repeater)
-    }
-
-    fun getTestTaskScheduler(): RepeatScheduler {
-        val repeater =
-            TaskRepeater(
-                eventService,
-                testTasksRepository,
-                membersRepository,
-                memberAssignmentsRepository,
-                testTaskAssignmentsRepository,
-                Dispatchers.Default
-            )
-        val config = RepeatSchedulerConfig(
-            repeatType = SchedulerRepeatType.HOUR,
-            zoneId = ZoneId.of("UTC")
-        )
-        return RepeatScheduler(config, repeater)
+        return RepeatScheduler(config, repeater, LocalRunTimeLogsRepository(instantConverter))
     }
 
     @OptIn(EngineAPI::class)
