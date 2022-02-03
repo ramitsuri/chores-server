@@ -45,17 +45,6 @@ class AppContainer {
         taskAssignmentsRepository
     )
 
-    // For Test API
-    private val testTasksRepository =
-        LocalTasksRepository(housesRepository, instantConverter, uuidConverter)
-    private val testTaskAssignmentsRepository =
-        LocalTaskAssignmentsRepository(
-            testTasksRepository,
-            membersRepository,
-            instantConverter,
-            uuidConverter
-        )
-
     private val eventService: EventService = GuavaEventService()
     fun getEventService() = eventService
 
@@ -67,8 +56,6 @@ class AppContainer {
             TaskAssignmentRoutes("/task-assignments", taskAssignmentsRepository),
             MemberAssignmentRoutes(memberAssignmentsRepository),
             DummyRoutes(dummyRepository),
-            //TaskRoutes("/test/tasks", testTasksRepository, instantConverter),
-            //TaskAssignmentRoutes("/test/task-assignments", testTaskAssignmentsRepository)
         )
     }
 
@@ -87,7 +74,7 @@ class AppContainer {
                 Dispatchers.Default
             )
         val config = RepeatSchedulerConfig(
-            repeatType = SchedulerRepeatType.HOUR,
+            repeatType = SchedulerRepeatType.MINUTE,
             zoneId = ZoneId.of("UTC")
         )
         return RepeatScheduler(config, repeater, LocalRunTimeLogsRepository(instantConverter))

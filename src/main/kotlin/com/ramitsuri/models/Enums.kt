@@ -95,22 +95,18 @@ enum class ErrorCode(val key: Int) {
 
 enum class SchedulerRepeatType(
     val repeatDuration: Duration,
-    val afterRunSleepDuration: Duration,
-    val beforeRunSleepDuration: Duration
+    val warmUpStartDuration: Duration
 ) {
     MINUTE(
         repeatDuration = Duration.ofMinutes(1),
-        afterRunSleepDuration = Duration.ofSeconds(50),
-        beforeRunSleepDuration = Duration.ofSeconds(1)
+        warmUpStartDuration = Duration.ofMinutes(1).minusSeconds(10)
     ),
     HOUR(
         repeatDuration = Duration.ofHours(1),
-        afterRunSleepDuration = Duration.ofHours(1) - Duration.ofSeconds(30),
-        beforeRunSleepDuration = Duration.ofSeconds(1)
+        warmUpStartDuration = Duration.ofHours(1).minusSeconds(30)
     ),
     DAY(
         repeatDuration = Duration.ofDays(1),
-        afterRunSleepDuration = Duration.ofHours(23) - Duration.ofSeconds(30),
-        beforeRunSleepDuration = Duration.ofSeconds(1)
+        warmUpStartDuration = Duration.ofDays(1).minusSeconds(30)
     )
 }
