@@ -74,7 +74,7 @@ class AppContainer {
                 Dispatchers.Default
             )
         val config = RepeatSchedulerConfig(
-            repeatType = SchedulerRepeatType.MINUTE,
+            repeatType = SchedulerRepeatType.HOUR,
             zoneId = ZoneId.of("UTC")
         )
         return RepeatScheduler(config, repeater, LocalRunTimeLogsRepository(instantConverter))
