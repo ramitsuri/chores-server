@@ -48,6 +48,9 @@ dependencies {
     implementation("ch.qos.logback:logback-core:$logbackVersion")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
 
+    // Hash
+    implementation "com.ToxicBakery.library.bcrypt:bcrypt:1.0.9"
+
     // Testing
     testImplementation("io.ktor:ktor-server-tests:$ktorVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")

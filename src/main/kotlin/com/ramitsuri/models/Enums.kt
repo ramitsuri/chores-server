@@ -79,7 +79,11 @@ enum class ErrorCode(val key: Int) {
     UNKNOWN(0),
     INVALID_REQUEST(1),
     NOT_FOUND(2),
-    INTERNAL_ERROR(3);
+    INTERNAL_ERROR(3),
+    INVALID_TOKEN(4),
+    EMPTY_TOKEN(5),
+    MISSING_AUTHORIZATION(6),
+    EXPIRED_TOKEN(7);
 
     companion object {
         fun fromKey(key: Int): ErrorCode {

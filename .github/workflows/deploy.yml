@@ -23,6 +23,8 @@ jobs:
           echo "  DB_DRIVER: ${{ secrets.DB_DRIVER }}" >> src/main/appengine/app.yaml
           echo "  DB_USERNAME: ${{ secrets.DB_USERNAME }}" >> src/main/appengine/app.yaml
           echo "  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}" >> src/main/appengine/app.yaml
+          echo "  JWT_SECRET: ${{ secrets.JWT_SECRET }}" >> src/main/appengine/app.yaml
+          echo "  JWT_ISSUER: ${{ secrets.JWT_ISSUER }}" >> src/main/appengine/app.yaml
 
       - name: Check environment vars
         run: >

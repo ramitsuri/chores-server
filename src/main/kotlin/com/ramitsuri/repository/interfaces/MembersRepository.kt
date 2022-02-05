@@ -15,4 +15,6 @@ interface MembersRepository {
     suspend fun get(): List<Member>
 
     suspend fun get(id: String): Member?
+
+    suspend fun getAuthenticated(id: String, key: String): Member?
 }

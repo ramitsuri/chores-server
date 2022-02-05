@@ -19,4 +19,8 @@ class EnvironmentRepository {
     fun getDbUsername() = System.getenv("DB_USERNAME") ?: properties.getProperty("DB_USERNAME") ?: ""
 
     fun getDbPassword() = System.getenv("DB_PASSWORD") ?: properties.getProperty("DB_PASSWORD") ?: ""
+
+    fun getJwtSecret() = System.getenv("JWT_SECRET") ?: properties.getProperty("JWT_SECRET") ?: "jwt_secret"
+
+    fun getJwtIssuer() = System.getenv("JWT_ISSUER") ?: properties.getProperty("JWT_ISSUER") ?: "jwt_issuer"
 }

@@ -26,7 +26,8 @@ data class Member(
     val id: String,
     val name: String,
     @Serializable(with = InstantSerializer::class)
-    val createdDate: Instant
+    val createdDate: Instant,
+    val key: String = ""
 )
 
 @Serializable
@@ -101,6 +102,9 @@ data class Error(
     @Serializable(with = ErrorCodeSerializer::class)
     val code: ErrorCode, val message: String
 )
+
+@Serializable
+data class Token(val authToken: String)
 
 data class RepeatSchedulerConfig(
     val repeatType: SchedulerRepeatType,

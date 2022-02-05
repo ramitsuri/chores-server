@@ -1,12 +1,15 @@
 package com.ramitsuri.di
 
+import com.ramitsuri.Constants
 import com.ramitsuri.data.DatabaseFactory
 import com.ramitsuri.data.InstantConverter
 import com.ramitsuri.data.UuidConverter
+import com.ramitsuri.environment.EnvironmentRepository
 import com.ramitsuri.events.EventService
 import com.ramitsuri.events.GuavaEventService
 import com.ramitsuri.models.RepeatSchedulerConfig
 import com.ramitsuri.models.SchedulerRepeatType
+import com.ramitsuri.plugins.JwtService
 import com.ramitsuri.repeater.RepeatScheduler
 import com.ramitsuri.repeater.TaskRepeater
 import com.ramitsuri.repository.local.*
@@ -18,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import java.time.ZoneId
 
 class AppContainer {
+    val environment = EnvironmentRepository()
     private val uuidConverter = UuidConverter()
     private val instantConverter = InstantConverter()
 
@@ -46,15 +50,23 @@ class AppContainer {
     )
 
     private val eventService: EventService = GuavaEventService()
-    fun getEventService() = eventService
+
+    private val jwtService = JwtService(
+        environment.getJwtIssuer(),
+        membersRepository,
+        Constants.TOKEN_EXPIRATION,
+        environment.getJwtSecret()
+    )
+    fun getJwtService() = jwtService
 
     fun getRoutes(): List<Routes> {
         return listOf(
             HouseRoutes(housesRepository),
             MemberRoutes(membersRepository),
-            TaskRoutes("/tasks", tasksRepository, instantConverter),
-            TaskAssignmentRoutes("/task-assignments", taskAssignmentsRepository),
+            TaskRoutes(tasksRepository, instantConverter),
+            TaskAssignmentRoutes(taskAssignmentsRepository),
             MemberAssignmentRoutes(memberAssignmentsRepository),
+            LoginRoutes(jwtService, membersRepository),
             DummyRoutes(dummyRepository),
         )
     }

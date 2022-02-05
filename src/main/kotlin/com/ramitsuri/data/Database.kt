@@ -20,7 +20,7 @@ object DatabaseFactory {
 
         transaction {
             for (table in getTables()) {
-                SchemaUtils.create(table)
+                SchemaUtils.createMissingTablesAndColumns(table)
             }
         }
     }
@@ -63,6 +63,7 @@ object Houses : UUIDTable() {
 object Members : UUIDTable() {
     val name: Column<String> = varchar("name", 50)
     val createdDate: Column<String> = varchar("createdDate", 50)
+    val key: Column<String> = varchar("key", 80).default("")
 }
 
 object MemberAssignments : UUIDTable() {
@@ -92,6 +93,6 @@ object TaskAssignments : UUIDTable() {
     val createType: Column<Int> = integer("createType")
 }
 
-object RunTimeLogs: IntIdTable() {
+object RunTimeLogs : IntIdTable() {
     val runTime: Column<String> = varchar("runDate", 50)
 }

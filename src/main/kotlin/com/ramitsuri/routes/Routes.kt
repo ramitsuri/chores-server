@@ -1,20 +1,40 @@
 package com.ramitsuri.routes
 
+import com.ramitsuri.Constants
 import com.ramitsuri.models.Error
 import com.ramitsuri.models.ErrorCode
 import io.ktor.application.*
+import io.ktor.auth.*
 import io.ktor.http.*
+import io.ktor.routing.*
 
-abstract class Routes {
-    abstract fun register(application: Application)
+abstract class Routes(private val authenticationConfig: String? = Constants.JWT_AUTH_CONFIG_BASE) {
+    fun register(application: Application) {
+        application.routing {
+            if (authenticationConfig != null) {
+                authenticate(authenticationConfig) {
+                    route(path) {
+                        routes()
+                    }
+                }
+            } else {
+                route(path) {
+                    routes()
+                }
+            }
+        }
+    }
 
-    protected fun getInvalidIdParamError(): Pair<HttpStatusCode, Error> {
-        return Pair(
+    protected val invalidIdParamError: Pair<HttpStatusCode, Error> =
+        Pair(
             HttpStatusCode.BadRequest,
             Error(
                 ErrorCode.INVALID_REQUEST,
                 "id query string parameter is required"
             )
         )
-    }
+
+    abstract val routes: Route.() -> Unit
+    abstract val path: String
+
 }
