@@ -1,5 +1,6 @@
 package com.ramitsuri.routes
 
+import com.ramitsuri.models.LoginParam
 import com.ramitsuri.models.Token
 import com.ramitsuri.plugins.JwtService
 import com.ramitsuri.repository.interfaces.MembersRepository
@@ -18,9 +19,9 @@ class LoginRoutes(
 
     override val routes: Route.() -> Unit = {
         post {
-            val loginParams = call.receive<Parameters>()
-            val id = loginParams[ID_PARAM] ?: return@post call.respond(HttpStatusCode.Unauthorized, "Missing Fields")
-            val key = loginParams[KEY_PARAM] ?: return@post call.respond(HttpStatusCode.Unauthorized, "Missing Fields")
+            val loginParam = call.receive<LoginParam>()
+            val id = loginParam.id ?: return@post call.respond(HttpStatusCode.Unauthorized, "Missing Fields")
+            val key = loginParam.key ?: return@post call.respond(HttpStatusCode.Unauthorized, "Missing Fields")
 
             val authenticated = membersRepository.getAuthenticated(id, key)
             if (authenticated != null) {
