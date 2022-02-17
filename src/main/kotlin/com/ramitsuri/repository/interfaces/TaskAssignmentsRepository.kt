@@ -3,6 +3,7 @@ package com.ramitsuri.repository.interfaces
 import com.ramitsuri.models.CreateType
 import com.ramitsuri.models.ProgressStatus
 import com.ramitsuri.models.TaskAssignment
+import com.ramitsuri.models.TaskAssignmentDto
 import java.time.Instant
 
 interface TaskAssignmentsRepository {
@@ -21,6 +22,8 @@ interface TaskAssignmentsRepository {
     suspend fun delete(id: String): Int
 
     suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): TaskAssignment?
+
+    suspend fun edit(taskAssignments: List<TaskAssignmentDto>): Int
 
     suspend fun get(): List<TaskAssignment>
 
