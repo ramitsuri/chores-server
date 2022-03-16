@@ -23,7 +23,7 @@ interface TaskAssignmentsRepository {
 
     suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): TaskAssignment?
 
-    suspend fun edit(taskAssignments: List<TaskAssignmentDto>): Int
+    suspend fun edit(taskAssignments: List<TaskAssignmentDto>): List<String>
 
     suspend fun get(): List<TaskAssignment>
 

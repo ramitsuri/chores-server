@@ -74,6 +74,23 @@ class LocalTaskAssignmentsRepository(
         return get(id)
     }
 
+    override suspend fun edit(taskAssignments: List<TaskAssignmentDto>): List<String> {
+        val updatedIds = mutableListOf<String>()
+        DatabaseFactory.query {
+            taskAssignments.forEach { taskAssignmentDto ->
+                val uuid = uuidConverter.toStorage(taskAssignmentDto.id)
+                val result = TaskAssignments.update({ TaskAssignments.id.eq(uuid) }) {
+                    it[statusDate] = instantConverter.toStorage(taskAssignmentDto.progressStatusDate)
+                    it[statusType] = taskAssignmentDto.progressStatus
+                }
+                if (result == 1) { // Indicates row updated
+                    updatedIds.add(taskAssignmentDto.id)
+                }
+            }
+        }
+        return updatedIds
+    }
+
     override suspend fun get(): List<TaskAssignment> {
         val members = membersRepository.get()
         val tasks = tasksRepository.get()

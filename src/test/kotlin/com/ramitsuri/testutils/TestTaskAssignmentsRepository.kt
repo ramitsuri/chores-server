@@ -3,6 +3,7 @@ package com.ramitsuri.testutils
 import com.ramitsuri.models.CreateType
 import com.ramitsuri.models.ProgressStatus
 import com.ramitsuri.models.TaskAssignment
+import com.ramitsuri.models.TaskAssignmentDto
 import com.ramitsuri.repository.interfaces.MembersRepository
 import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
@@ -62,6 +63,10 @@ class TestTaskAssignmentsRepository(
     }
 
     override suspend fun get(filter: TaskAssignmentFilter): List<TaskAssignment> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun edit(taskAssignments: List<TaskAssignmentDto>): List<String> {
         TODO("Not yet implemented")
     }
 

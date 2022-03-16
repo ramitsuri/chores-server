@@ -105,11 +105,7 @@ class TaskAssignmentRoutes(
         // Edit
         put {
             val assignmentDtos = call.receive<List<TaskAssignmentDto>>()
-                .filter {
-                    it.id != null &&
-                            ProgressStatus.fromKey(it.progressStatus) != ProgressStatus.UNKNOWN &&
-                            it.progressStatusDate != null
-                }
+                .filter { ProgressStatus.fromKey(it.progressStatus) != ProgressStatus.UNKNOWN }
             val result = taskAssignmentsRepository.edit(assignmentDtos)
             call.respond(result)
         }

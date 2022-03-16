@@ -94,10 +94,10 @@ data class TaskAssignment(
 
 @Serializable
 data class TaskAssignmentDto(
-    val id: String?,
+    val id: String = "",
     val progressStatus: Int,
     @Serializable(with = InstantSerializer::class)
-    val progressStatusDate: Instant?
+    val progressStatusDate: Instant = Instant.now()
 )
 
 @Serializable
