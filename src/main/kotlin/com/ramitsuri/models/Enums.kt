@@ -97,6 +97,24 @@ enum class ErrorCode(val key: Int) {
     }
 }
 
+enum class Access(val key: Int) {
+    NONE(0),
+    READ_HOUSE_WRITE_OWN(1),
+    READ_HOUSE_WRITE_HOUSE(2),
+    READ_ALL_WRITE_ALL(3);
+
+    companion object {
+        fun fromKey(key: Int): Access {
+            for (value in values()) {
+                if (value.key == key) {
+                    return value
+                }
+            }
+            return NONE
+        }
+    }
+}
+
 enum class SchedulerRepeatType(
     val repeatDuration: Duration,
     val warmUpStartDuration: Duration

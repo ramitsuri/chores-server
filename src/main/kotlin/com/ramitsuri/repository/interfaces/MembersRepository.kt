@@ -1,6 +1,7 @@
 package com.ramitsuri.repository.interfaces
 
 import com.ramitsuri.models.Member
+import com.ramitsuri.models.Access
 import java.time.Instant
 
 interface MembersRepository {
@@ -17,4 +18,6 @@ interface MembersRepository {
     suspend fun get(id: String): Member?
 
     suspend fun getAuthenticated(id: String, key: String): Member?
+
+    suspend fun getAccess(id: String): Access
 }

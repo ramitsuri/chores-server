@@ -1,5 +1,6 @@
 package com.ramitsuri.testutils
 
+import com.ramitsuri.models.Access
 import com.ramitsuri.models.Member
 import com.ramitsuri.repository.interfaces.MembersRepository
 import com.toxicbakery.bcrypt.Bcrypt
@@ -56,5 +57,9 @@ class TestMembersRepository : BaseTestRepository<Member>(), MembersRepository {
         } else {
             null
         }
+    }
+
+    override suspend fun getAccess(id: String): Access {
+        TODO("Not yet implemented")
     }
 }

@@ -37,27 +37,6 @@ class TestTaskAssignmentsRepository(
         return size
     }
 
-    override suspend fun delete(id: String): Int {
-        val toDelete = storage[id]
-        return toDelete?.let {
-            storage.remove(id)
-            1
-        } ?: run {
-            0
-        }
-    }
-
-    override suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): TaskAssignment? {
-        val toEdit = storage[id]
-        return toEdit?.let {
-            val new = it.copy(progressStatus = progressStatus, progressStatusDate = statusDate)
-            storage[id] = new
-            storage[id]
-        } ?: run {
-            null
-        }
-    }
-
     override suspend fun get(): List<TaskAssignment> {
         return storage.values.toList()
     }
@@ -66,11 +45,19 @@ class TestTaskAssignmentsRepository(
         TODO("Not yet implemented")
     }
 
+    override suspend fun getForHouse(filter: TaskAssignmentFilter, houseIds: List<String>): List<TaskAssignment> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun edit(taskAssignments: List<TaskAssignmentDto>): List<String> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun get(id: String): TaskAssignment? {
-        return storage[id]
+    override suspend fun editOwn(taskAssignments: List<TaskAssignmentDto>, requesterMemberId: String): List<String> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun editForHouse(taskAssignments: List<TaskAssignmentDto>, houseIds: List<String>): List<String> {
+        TODO("Not yet implemented")
     }
 }

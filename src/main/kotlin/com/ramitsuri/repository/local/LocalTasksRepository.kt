@@ -17,7 +17,7 @@ class LocalTasksRepository(
     private val housesRepository: HousesRepository,
     private val instantConverter: Converter<Instant, String>,
     private val uuidConverter: Converter<String, UUID>
-): TasksRepository, Loggable {
+) : TasksRepository, Loggable {
     override val log = logger()
     override suspend fun add(
         name: String,
@@ -36,7 +36,7 @@ class LocalTasksRepository(
         }
         var statement: InsertStatement<Number>? = null
         query {
-            statement = Tasks.insert {task ->
+            statement = Tasks.insert { task ->
                 task[Tasks.name] = name
                 task[Tasks.description] = description
                 task[Tasks.dueDate] = instantConverter.toStorage(dueDate)
@@ -65,7 +65,7 @@ class LocalTasksRepository(
     override suspend fun delete(id: String): Int {
         return query {
             val uuid = uuidConverter.toStorage(id)
-            Tasks.deleteWhere {Tasks.id.eq(uuid)}
+            Tasks.deleteWhere { Tasks.id.eq(uuid) }
         }
     }
 
@@ -80,7 +80,7 @@ class LocalTasksRepository(
     ): Int {
         return query {
             val uuid = uuidConverter.toStorage(id)
-            Tasks.update({Tasks.id.eq(uuid)}) {task ->
+            Tasks.update({ Tasks.id.eq(uuid) }) { task ->
                 task[Tasks.name] = name
                 task[Tasks.description] = description
                 task[Tasks.dueDate] = instantConverter.toStorage(dueDate)
@@ -99,10 +99,19 @@ class LocalTasksRepository(
         }
     }
 
+    override suspend fun getForHouses(houseIds: List<String>): List<Task> {
+        val houseIdUuids = houseIds.map { uuidConverter.toStorage(it) }
+        return query {
+            Tasks.select { Tasks.houseId.inList(houseIdUuids) }.filterNotNull().map {
+                rowToTask(it)
+            }
+        }
+    }
+
     override suspend fun get(id: String): Task? {
         return query {
             val uuid = uuidConverter.toStorage(id)
-            Tasks.select {Tasks.id.eq(uuid)}.map {
+            Tasks.select { Tasks.id.eq(uuid) }.map {
                 rowToTask(it)
             }.singleOrNull()
         }

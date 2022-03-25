@@ -46,4 +46,8 @@ class TestMemberAssignmentsRepository(
     override suspend fun getForHouse(houseId: String): List<MemberAssignment> {
         return storage.filter {it.value.houseId == houseId}.values.toList()
     }
+
+    override suspend fun getForMember(memberId: String): List<MemberAssignment> {
+        TODO("Not yet implemented")
+    }
 }
