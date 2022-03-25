@@ -33,5 +33,7 @@ interface TasksRepository {
 
     suspend fun get(): List<Task>
 
+    suspend fun getForHouses(houseIds: List<String>): List<Task>
+
     suspend fun get(id: String): Task?
 }

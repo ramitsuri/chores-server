@@ -85,6 +85,21 @@ class LocalMemberAssignmentsRepository(
         }
     }
 
+    override suspend fun getForMember(memberId: String): List<MemberAssignment> {
+        val members = membersRepository.get()
+        return DatabaseFactory.query {
+            val uuid = uuidConverter.toStorage(memberId)
+            MemberAssignments.select {MemberAssignments.memberId.eq(uuid)}.filterNotNull().mapNotNull {row ->
+                val member = members.firstOrNull {it.id == rowToMemberId(row)}
+                if (member != null) {
+                    rowToMemberAssignment(row, member)
+                } else {
+                    null
+                }
+            }
+        }
+    }
+
     private fun rowToMemberAssignment(row: ResultRow, member: Member): MemberAssignment {
         val id = row[MemberAssignments.id].toString()
         val houseId = uuidConverter.toMain(row[MemberAssignments.houseId])

@@ -27,7 +27,9 @@ data class Member(
     val name: String,
     @Serializable(with = InstantSerializer::class)
     val createdDate: Instant,
-    val key: String = ""
+    val key: String = "",
+    @Serializable(with = ResourceAccessSerializer::class)
+    val access: Access = Access.READ_HOUSE_WRITE_OWN
 )
 
 @Serializable
@@ -116,3 +118,8 @@ data class RepeatSchedulerConfig(
 
 @Serializable
 data class LoginParam(val id: String?, val key: String?)
+
+sealed class AccessResult<out T> {
+    data class Success<T>(val data: T) : AccessResult<T>()
+    object Failure : AccessResult<Nothing>()
+}

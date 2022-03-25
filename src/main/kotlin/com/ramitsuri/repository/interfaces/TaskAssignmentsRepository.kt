@@ -19,17 +19,20 @@ interface TaskAssignmentsRepository {
 
     suspend fun delete(): Int
 
-    suspend fun delete(id: String): Int
-
-    suspend fun edit(id: String, progressStatus: ProgressStatus, statusDate: Instant): TaskAssignment?
-
     suspend fun edit(taskAssignments: List<TaskAssignmentDto>): List<String>
+
+    // Edit will be applied if the assignment is assigned to the requester member
+    suspend fun editOwn(taskAssignments: List<TaskAssignmentDto>, requesterMemberId: String): List<String>
+
+    // Edit will be applied if the assignment's task belongs to requester member's houses
+    suspend fun editForHouse(taskAssignments: List<TaskAssignmentDto>, houseIds: List<String>): List<String>
 
     suspend fun get(): List<TaskAssignment>
 
     suspend fun get(filter: TaskAssignmentFilter): List<TaskAssignment>
 
-    suspend fun get(id: String): TaskAssignment?
+    // Get if the assignment's task belongs to requester member's houses
+    suspend fun getForHouse(filter: TaskAssignmentFilter, houseIds: List<String>): List<TaskAssignment>
 }
 
 data class TaskAssignmentFilter(

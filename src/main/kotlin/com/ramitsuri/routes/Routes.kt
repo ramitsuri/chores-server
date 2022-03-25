@@ -34,6 +34,15 @@ abstract class Routes(private val authenticationConfig: String? = Constants.JWT_
             )
         )
 
+    protected val invalidTokenError: Pair<HttpStatusCode, Error> =
+        Pair(
+            HttpStatusCode.Unauthorized,
+            Error(
+                ErrorCode.INVALID_TOKEN,
+                "authorization token is not valid"
+            )
+        )
+
     abstract val routes: Route.() -> Unit
     abstract val path: String
 

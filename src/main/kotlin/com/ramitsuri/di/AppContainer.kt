@@ -12,6 +12,7 @@ import com.ramitsuri.models.SchedulerRepeatType
 import com.ramitsuri.plugins.JwtService
 import com.ramitsuri.repeater.RepeatScheduler
 import com.ramitsuri.repeater.TaskRepeater
+import com.ramitsuri.repository.access.TaskAssignmentAccessController
 import com.ramitsuri.repository.local.*
 import com.ramitsuri.routes.*
 import com.ramitsuri.utils.DummyRepository
@@ -41,6 +42,8 @@ class AppContainer {
             housesRepository,
             uuidConverter
         )
+    private val taskAssignmentsAccessController =
+        TaskAssignmentAccessController(membersRepository, memberAssignmentsRepository, taskAssignmentsRepository)
     private val dummyRepository = DummyRepository(
         membersRepository,
         housesRepository,
@@ -61,13 +64,13 @@ class AppContainer {
 
     fun getRoutes(): List<Routes> {
         return listOf(
-            HouseRoutes(housesRepository),
-            MemberRoutes(membersRepository),
-            TaskRoutes(tasksRepository, instantConverter),
-            TaskAssignmentRoutes(taskAssignmentsRepository),
-            MemberAssignmentRoutes(memberAssignmentsRepository),
+            //HouseRoutes(housesRepository),
+            //MemberRoutes(membersRepository),
+            //TaskRoutes(tasksRepository, instantConverter),
+            TaskAssignmentRoutes(taskAssignmentsAccessController),
+            //MemberAssignmentRoutes(memberAssignmentsRepository),
             LoginRoutes(jwtService, membersRepository),
-            DummyRoutes(dummyRepository),
+            //DummyRoutes(dummyRepository),
         )
     }
 

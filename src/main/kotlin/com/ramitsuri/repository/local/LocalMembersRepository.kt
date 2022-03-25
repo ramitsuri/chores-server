@@ -4,6 +4,7 @@ import com.ramitsuri.data.Converter
 import com.ramitsuri.data.DatabaseFactory.query
 import com.ramitsuri.data.Members
 import com.ramitsuri.models.Member
+import com.ramitsuri.models.Access
 import com.ramitsuri.repository.interfaces.MembersRepository
 import com.toxicbakery.bcrypt.Bcrypt
 import org.jetbrains.exposed.sql.*
@@ -82,6 +83,15 @@ class LocalMembersRepository(
             } else {
                 null
             }
+        }
+    }
+
+    override suspend fun getAccess(id: String): Access {
+        return query {
+            val uuid = uuidConverter.toStorage(id)
+            Members.select { Members.id.eq(uuid) }.map { row ->
+                Access.fromKey(row[Members.access])
+            }.singleOrNull() ?: Access.NONE
         }
     }
 

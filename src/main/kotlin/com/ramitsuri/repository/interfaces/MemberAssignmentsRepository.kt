@@ -14,4 +14,6 @@ interface MemberAssignmentsRepository {
     suspend fun get(id: String): MemberAssignment?
 
     suspend fun getForHouse(houseId: String): List<MemberAssignment>
+
+    suspend fun getForMember(memberId: String): List<MemberAssignment>
 }

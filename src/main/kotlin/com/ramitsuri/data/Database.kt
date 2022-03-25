@@ -64,6 +64,7 @@ object Members : UUIDTable() {
     val name: Column<String> = varchar("name", 50)
     val createdDate: Column<String> = varchar("createdDate", 50)
     val key: Column<String> = varchar("key", 80).default("")
+    val access: Column<Int> = integer("access").default(1)
 }
 
 object MemberAssignments : UUIDTable() {

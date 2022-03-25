@@ -104,3 +104,20 @@ object CreateTypeSerializer: KSerializer<CreateType> {
         encoder.encodeInt(value.key)
     }
 }
+
+object ResourceAccessSerializer: KSerializer<Access> {
+    override val descriptor = PrimitiveSerialDescriptor("ResourceAccess", PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): Access {
+        val access = try {
+            Access.fromKey(decoder.decodeString().toInt())
+        } catch (e: Exception) {
+            Access.NONE
+        }
+        return access
+    }
+
+    override fun serialize(encoder: Encoder, value: Access) {
+        encoder.encodeInt(value.key)
+    }
+}

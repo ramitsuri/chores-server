@@ -80,4 +80,8 @@ class TestTasksRepository(
     override suspend fun get(id: String): Task? {
         return storage[id]
     }
+
+    override suspend fun getForHouses(houseIds: List<String>): List<Task> {
+        TODO("Not yet implemented")
+    }
 }

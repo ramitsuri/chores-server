@@ -111,3 +111,8 @@ class JwtService(
 
 @Serializable
 data class TokenBody(val sub: String, val iss: String, val id: String, val exp: Long)
+
+fun ApplicationCall.getMemberId(): String? {
+    val principal = principal<JWTPrincipal>()
+    return principal?.getClaim("id", String::class)
+}
