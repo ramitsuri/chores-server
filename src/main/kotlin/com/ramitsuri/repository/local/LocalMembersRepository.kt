@@ -18,10 +18,22 @@ class LocalMembersRepository(
 ) : MembersRepository {
     override suspend fun add(name: String, createdDate: Instant): Member? {
         var statement: InsertStatement<Number>? = null
-        query {
-            statement = Members.insert { member ->
-                member[Members.name] = name
-                member[Members.createdDate] = instantConverter.toStorage(createdDate)
+        if (name == "Ramit") {
+            query {
+                statement = Members.insert { member ->
+                    member[Members.id] = uuidConverter.toStorage("d60c0cf3-507f-45b9-a116-3178028b3436")
+                    member[Members.name] = name
+                    member[Members.createdDate] = instantConverter.toStorage(createdDate)
+                    member[Members.key] = String(Bcrypt.hash("hello", 4))
+                    member[Members.access] = Access.READ_HOUSE_WRITE_OWN.key
+                }
+            }
+        } else {
+            query {
+                statement = Members.insert { member ->
+                    member[Members.name] = name
+                    member[Members.createdDate] = instantConverter.toStorage(createdDate)
+                }
             }
         }
         statement?.resultedValues?.get(0)?.let {

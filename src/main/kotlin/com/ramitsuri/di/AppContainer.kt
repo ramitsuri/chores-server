@@ -44,7 +44,7 @@ class AppContainer {
         )
     private val taskAssignmentsAccessController =
         TaskAssignmentAccessController(membersRepository, memberAssignmentsRepository, taskAssignmentsRepository)
-    private val dummyRepository = DummyRepository(
+     val dummyRepository = DummyRepository(
         membersRepository,
         housesRepository,
         tasksRepository,
@@ -89,7 +89,7 @@ class AppContainer {
                 Dispatchers.Default
             )
         val config = RepeatSchedulerConfig(
-            repeatType = SchedulerRepeatType.HOUR,
+            repeatType = SchedulerRepeatType.MINUTE,
             zoneId = ZoneId.of("UTC")
         )
         return RepeatScheduler(config, repeater, LocalRunTimeLogsRepository(instantConverter))

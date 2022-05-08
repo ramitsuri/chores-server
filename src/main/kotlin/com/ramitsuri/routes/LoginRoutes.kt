@@ -4,11 +4,12 @@ import com.ramitsuri.models.LoginParam
 import com.ramitsuri.models.Token
 import com.ramitsuri.plugins.JwtService
 import com.ramitsuri.repository.interfaces.MembersRepository
-import io.ktor.application.*
-import io.ktor.http.*
-import io.ktor.request.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.application.call
+import io.ktor.http.HttpStatusCode
+import io.ktor.request.receive
+import io.ktor.response.respond
+import io.ktor.routing.Route
+import io.ktor.routing.post
 
 class LoginRoutes(
     jwtService: JwtService,

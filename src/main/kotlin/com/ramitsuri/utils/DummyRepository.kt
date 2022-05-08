@@ -40,7 +40,7 @@ class DummyRepository(
                         RepeatUnit.WEEK,
                         house1.id,
                         member1.id,
-                        true,
+                        false,
                         Instant.now()
                     )
                 val task2 =
@@ -52,7 +52,7 @@ class DummyRepository(
                         RepeatUnit.WEEK,
                         house1.id,
                         member1.id,
-                        true,
+                        false,
                         Instant.now()
                     )
                 val task3 =
@@ -63,7 +63,7 @@ class DummyRepository(
                         1,
                         RepeatUnit.DAY,
                         house1.id,
-                        member2.id,
+                        member1.id,
                         false,
                         Instant.now()
                     )
@@ -91,7 +91,7 @@ class DummyRepository(
                     ProgressStatus.TODO,
                     Instant.now(),
                     task3!!.id,
-                    member2.id,
+                    member1.id,
                     task3.dueDateTime,
                     Instant.now(),
                     CreateType.MANUAL

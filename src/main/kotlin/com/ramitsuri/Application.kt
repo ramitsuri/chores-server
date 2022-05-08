@@ -20,6 +20,7 @@ fun main() {
         environment.getDbPassword()
     )
     CoroutineScope(Dispatchers.Default).launch {
+        appContainer.dummyRepository.add()
         appContainer.getTaskScheduler().schedule()
     }
     embeddedServer(appContainer.getApplicationEngine(), port = 8081, configure = {
