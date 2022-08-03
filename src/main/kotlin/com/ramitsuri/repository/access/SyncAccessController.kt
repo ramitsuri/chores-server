@@ -8,8 +8,9 @@ import com.ramitsuri.repository.interfaces.SyncRepository
 
 class SyncAccessController(
     private val syncRepository: SyncRepository,
-    private val membersRepository: MembersRepository
-) {
+    membersRepository: MembersRepository
+) : AccessController(membersRepository) {
+
     suspend fun get(requesterMemberId: String): AccessResult<SyncResult> {
         return when (getAccess(requesterMemberId)) {
             Access.NONE -> {
@@ -23,6 +24,4 @@ class SyncAccessController(
             }
         }
     }
-
-    private suspend fun getAccess(memberId: String): Access = membersRepository.getAccess(memberId)
 }

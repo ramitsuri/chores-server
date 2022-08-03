@@ -10,10 +10,10 @@ import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
 
 class TaskAssignmentAccessController(
-    private val membersRepository: MembersRepository,
     private val memberAssignmentsRepository: MemberAssignmentsRepository,
-    private val taskAssignmentsRepository: TaskAssignmentsRepository
-) {
+    private val taskAssignmentsRepository: TaskAssignmentsRepository,
+    membersRepository: MembersRepository
+) : AccessController(membersRepository) {
 
     suspend fun get(requesterMemberId: String, filter: TaskAssignmentFilter): AccessResult<List<TaskAssignment>> {
         return when (getAccess(requesterMemberId)) {
@@ -47,6 +47,4 @@ class TaskAssignmentAccessController(
             }
         }
     }
-
-    private suspend fun getAccess(memberId: String): Access = membersRepository.getAccess(memberId)
 }

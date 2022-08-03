@@ -44,7 +44,7 @@ class AppContainer {
             uuidConverter
         )
     private val taskAssignmentsAccessController =
-        TaskAssignmentAccessController(membersRepository, memberAssignmentsRepository, taskAssignmentsRepository)
+        TaskAssignmentAccessController(memberAssignmentsRepository, taskAssignmentsRepository, membersRepository)
     private val syncRepository = LocalSyncRepository(memberAssignmentsRepository, housesRepository)
     private val syncAccessController = SyncAccessController(syncRepository, membersRepository)
     private val dummyRepository = DummyRepository(
