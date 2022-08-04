@@ -12,6 +12,7 @@ import com.ramitsuri.models.SchedulerRepeatType
 import com.ramitsuri.plugins.JwtService
 import com.ramitsuri.repeater.RepeatScheduler
 import com.ramitsuri.repeater.TaskRepeater
+import com.ramitsuri.repository.access.SyncAccessController
 import com.ramitsuri.repository.access.TaskAssignmentAccessController
 import com.ramitsuri.repository.local.*
 import com.ramitsuri.routes.*
@@ -43,7 +44,9 @@ class AppContainer {
             uuidConverter
         )
     private val taskAssignmentsAccessController =
-        TaskAssignmentAccessController(membersRepository, memberAssignmentsRepository, taskAssignmentsRepository)
+        TaskAssignmentAccessController(memberAssignmentsRepository, taskAssignmentsRepository, membersRepository)
+    private val syncRepository = LocalSyncRepository(memberAssignmentsRepository, housesRepository)
+    private val syncAccessController = SyncAccessController(syncRepository, membersRepository)
     private val dummyRepository = DummyRepository(
         membersRepository,
         housesRepository,
@@ -60,6 +63,7 @@ class AppContainer {
         Constants.TOKEN_EXPIRATION,
         environment.getJwtSecret()
     )
+
     fun getJwtService() = jwtService
 
     fun getRoutes(): List<Routes> {
@@ -70,6 +74,7 @@ class AppContainer {
             TaskAssignmentRoutes(taskAssignmentsAccessController),
             //MemberAssignmentRoutes(memberAssignmentsRepository),
             LoginRoutes(jwtService, membersRepository),
+            SyncRoutes(syncAccessController)
             //DummyRoutes(dummyRepository),
         )
     }

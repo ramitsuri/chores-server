@@ -111,6 +111,11 @@ data class Error(
 @Serializable
 data class Token(val authToken: String)
 
+@Serializable
+data class SyncResult(
+    val associatedLists: List<House>
+)
+
 data class RepeatSchedulerConfig(
     val repeatType: SchedulerRepeatType,
     val zoneId: ZoneId
