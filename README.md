@@ -9,7 +9,13 @@ Backend server for the [Chores app](https://github.com/ramitsuri/chores-client) 
 - Update `entrypoint` value in `src/main/appengine/app.yaml` to correspond to the new version
 - Commit code 
 - Tag the commit in the format `v<version>`
+```
+git tag -a "v0.0.13" -m "Tagging v0.0.13"
+```
 - Push the tag. GitHub Actions will auto deploy the app
+```
+git push origin v0.0.13
+```
 
 ## To deploy to GCP
 ```

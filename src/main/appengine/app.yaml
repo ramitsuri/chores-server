@@ -1,3 +1,3 @@
 runtime: java11
-entrypoint: 'java -jar choresserver-0.0.13-all.jar'
+entrypoint: 'java -jar choresserver-0.0.14-all.jar'
 env_variables:
