@@ -68,11 +68,11 @@ class AppContainer {
 
     fun getRoutes(): List<Routes> {
         return listOf(
-            //HouseRoutes(housesRepository),
-            //MemberRoutes(membersRepository),
-            //TaskRoutes(tasksRepository, instantConverter),
+            HouseRoutes(housesRepository),
+            MemberRoutes(membersRepository),
+            TaskRoutes(tasksRepository, instantConverter),
             TaskAssignmentRoutes(taskAssignmentsAccessController),
-            //MemberAssignmentRoutes(memberAssignmentsRepository),
+            MemberAssignmentRoutes(memberAssignmentsRepository),
             LoginRoutes(jwtService, membersRepository),
             SyncRoutes(syncAccessController)
             //DummyRoutes(dummyRepository),
