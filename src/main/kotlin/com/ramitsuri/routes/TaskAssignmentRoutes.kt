@@ -38,7 +38,8 @@ class TaskAssignmentRoutes(
             val filter = TaskAssignmentFilter(
                 memberId = memberId,
                 notMemberId = notMemberId,
-                progressStatus = progressStatus
+                progressStatus = progressStatus,
+                onlyActiveAndPausedHouse = true
             )
             when (val accessResult = taskAssignmentsAccessController.get(requesterMemberId, filter)) {
                 is AccessResult.Success -> {

@@ -3,6 +3,7 @@ package com.ramitsuri.di
 import com.ramitsuri.Constants
 import com.ramitsuri.data.DatabaseFactory
 import com.ramitsuri.data.InstantConverter
+import com.ramitsuri.data.LocalDateTimeConverter
 import com.ramitsuri.data.UuidConverter
 import com.ramitsuri.environment.EnvironmentRepository
 import com.ramitsuri.events.EventService
@@ -26,15 +27,19 @@ class AppContainer {
     val environment = EnvironmentRepository()
     private val uuidConverter = UuidConverter()
     private val instantConverter = InstantConverter()
+    private val localDateTimeConverter = LocalDateTimeConverter()
 
     private val housesRepository = LocalHousesRepository(uuidConverter, instantConverter)
     private val membersRepository = LocalMembersRepository(instantConverter, uuidConverter)
-    private val tasksRepository = LocalTasksRepository(housesRepository, instantConverter, uuidConverter)
+    private val tasksRepository =
+        LocalTasksRepository(housesRepository, instantConverter, localDateTimeConverter, uuidConverter)
     private val taskAssignmentsRepository =
         LocalTaskAssignmentsRepository(
             tasksRepository,
             membersRepository,
+            housesRepository,
             instantConverter,
+            localDateTimeConverter,
             uuidConverter
         )
     private val memberAssignmentsRepository =
@@ -70,7 +75,7 @@ class AppContainer {
         return listOf(
             HouseRoutes(housesRepository),
             MemberRoutes(membersRepository),
-            TaskRoutes(tasksRepository, instantConverter),
+            TaskRoutes(tasksRepository, localDateTimeConverter),
             TaskAssignmentRoutes(taskAssignmentsAccessController),
             MemberAssignmentRoutes(memberAssignmentsRepository),
             LoginRoutes(jwtService, membersRepository),
@@ -89,6 +94,7 @@ class AppContainer {
                 eventService,
                 tasksRepository,
                 membersRepository,
+                housesRepository,
                 memberAssignmentsRepository,
                 taskAssignmentsRepository,
                 Dispatchers.Default

@@ -1,20 +1,23 @@
 package com.ramitsuri.repository.interfaces
 
+import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.models.Task
 import java.time.Instant
+import java.time.LocalDateTime
 
 interface TasksRepository {
     suspend fun add(
         name: String,
         description: String,
-        dueDate: Instant,
+        dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
         houseId: String,
         memberId: String,
         rotateMember: Boolean,
-        createdDate: Instant
+        createdDate: Instant,
+        status: ActiveStatus
     ): Task?
 
     suspend fun delete(): Int
@@ -25,10 +28,11 @@ interface TasksRepository {
         id: String,
         name: String,
         description: String,
-        dueDate: Instant,
+        dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
-        rotateMember: Boolean
+        rotateMember: Boolean,
+        status: ActiveStatus
     ): Int
 
     suspend fun get(): List<Task>

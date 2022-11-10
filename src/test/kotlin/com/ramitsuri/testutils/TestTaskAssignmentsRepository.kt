@@ -9,17 +9,18 @@ import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
 import java.time.Instant
+import java.time.LocalDateTime
 
 class TestTaskAssignmentsRepository(
     private val tasksRepository: TasksRepository,
     private val membersRepository: MembersRepository
-): BaseTestRepository<TaskAssignment>(), TaskAssignmentsRepository {
+) : BaseTestRepository<TaskAssignment>(), TaskAssignmentsRepository {
     override suspend fun add(
         progressStatus: ProgressStatus,
         statusDate: Instant,
         taskId: String,
         memberId: String,
-        dueDate: Instant,
+        dueDate: LocalDateTime,
         createdDate: Instant,
         createType: CreateType
     ): TaskAssignment? {

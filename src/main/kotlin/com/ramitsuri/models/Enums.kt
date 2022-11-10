@@ -27,7 +27,8 @@ enum class ProgressStatus(val key: Int) {
     UNKNOWN(0),
     TODO(1),
     IN_PROGRESS(2),
-    DONE(3);
+    DONE(3),
+    WONT_DO(4);
 
     companion object {
         fun fromKey(key: Int): ProgressStatus {
@@ -44,7 +45,8 @@ enum class ProgressStatus(val key: Int) {
 enum class ActiveStatus(val key: Int) {
     UNKNOWN(0),
     ACTIVE(1),
-    INACTIVE(2);
+    INACTIVE(2), // This entity is no longer being used
+    PAUSED(3);
 
     companion object {
         fun fromKey(key: Int): ActiveStatus {

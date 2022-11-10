@@ -2,6 +2,7 @@ package com.ramitsuri.models
 
 import kotlinx.serialization.Serializable
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.ZoneId
 
 @Serializable
@@ -53,8 +54,8 @@ data class Task(
     val id: String,
     val name: String,
     val description: String,
-    @Serializable(with = InstantSerializer::class)
-    val dueDateTime: Instant,
+    @Serializable(with = LocalDateTimeSerializer::class)
+    val dueDateTime: LocalDateTime,
     val repeatValue: Int,
     @Serializable(with = RepeatUnitSerializer::class)
     val repeatUnit: RepeatUnit,
@@ -62,7 +63,9 @@ data class Task(
     val memberId: String,
     val rotateMember: Boolean,
     @Serializable(with = InstantSerializer::class)
-    val createdDate: Instant
+    val createdDate: Instant,
+    @Serializable(with = ActiveStatusSerializer::class)
+    val status: ActiveStatus
 )
 
 @Serializable
@@ -74,7 +77,8 @@ data class TaskDto(
     val repeatUnit: Int?,
     val houseId: String?,
     val memberId: String?,
-    val rotateMember: Boolean?
+    val rotateMember: Boolean?,
+    val status: ActiveStatus?
 )
 
 @Serializable
@@ -86,8 +90,8 @@ data class TaskAssignment(
     val progressStatusDate: Instant,
     val task: Task,
     val member: Member,
-    @Serializable(with = InstantSerializer::class)
-    val dueDateTime: Instant,
+    @Serializable(with = LocalDateTimeSerializer::class)
+    val dueDateTime: LocalDateTime,
     @Serializable(with = InstantSerializer::class)
     val createdDate: Instant,
     @Serializable(with = CreateTypeSerializer::class)

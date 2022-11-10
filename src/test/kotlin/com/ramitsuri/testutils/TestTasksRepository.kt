@@ -1,30 +1,46 @@
 package com.ramitsuri.testutils
 
+import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.models.Task
 import com.ramitsuri.repository.interfaces.HousesRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
 import java.time.Instant
+import java.time.LocalDateTime
+import kotlin.math.acos
 
 class TestTasksRepository(
     private val housesRepository: HousesRepository
-): BaseTestRepository<Task>(), TasksRepository {
+) : BaseTestRepository<Task>(), TasksRepository {
 
     override suspend fun add(
         name: String,
         description: String,
-        dueDate: Instant,
+        dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
         houseId: String,
         memberId: String,
         rotateMember: Boolean,
-        createdDate: Instant
+        createdDate: Instant,
+        status: ActiveStatus
     ): Task? {
         housesRepository.get(houseId) ?: return null
         val id = getNewId()
         val new =
-            Task(id, name, description, dueDate, repeatValue, repeatUnit, houseId, memberId, rotateMember, createdDate)
+            Task(
+                id,
+                name,
+                description,
+                dueDate,
+                repeatValue,
+                repeatUnit,
+                houseId,
+                memberId,
+                rotateMember,
+                createdDate,
+                status
+            )
         storage[id] = new
         return new
     }
@@ -49,10 +65,11 @@ class TestTasksRepository(
         id: String,
         name: String,
         description: String,
-        dueDate: Instant,
+        dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
-        rotateMember: Boolean
+        rotateMember: Boolean,
+        status: ActiveStatus
     ): Int {
         val toEdit = storage[id]
         return toEdit?.let {
@@ -64,7 +81,8 @@ class TestTasksRepository(
                     dueDateTime = dueDate,
                     repeatValue = repeatValue,
                     repeatUnit = repeatUnit,
-                    rotateMember = rotateMember
+                    rotateMember = rotateMember,
+                    status = status
                 )
             storage[id] = new
             1

@@ -24,6 +24,7 @@ class RepeatSchedulerTest: BaseRepeaterTest() {
                 TestEventsService(),
                 tasksRepository,
                 membersRepository,
+                housesRepository,
                 memberAssignmentsRepository,
                 taskAssignmentsRepository,
                 dispatcher
