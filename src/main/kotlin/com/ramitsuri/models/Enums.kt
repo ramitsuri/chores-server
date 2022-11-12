@@ -45,7 +45,7 @@ enum class ProgressStatus(val key: Int) {
 enum class ActiveStatus(val key: Int) {
     UNKNOWN(0),
     ACTIVE(1),
-    INACTIVE(2), // This entity is no longer being used
+    INACTIVE(2), // This status means that the entity with this status is no longer being used
     PAUSED(3);
 
     companion object {

@@ -50,6 +50,7 @@ class LocalTasksRepository(
                 task[Tasks.memberId] = uuidConverter.toStorage(memberId)
                 task[Tasks.rotateMember] = rotateMember
                 task[Tasks.createdDate] = instantConverter.toStorage(createdDate)
+                task[Tasks.activeStatus] = status.key
             }
         }
         statement?.resultedValues?.get(0)?.let {
@@ -92,6 +93,7 @@ class LocalTasksRepository(
                 task[Tasks.repeatValue] = repeatValue
                 task[Tasks.repeatUnit] = repeatUnit.key
                 task[Tasks.rotateMember] = rotateMember
+                task[Tasks.activeStatus] = status.key
             }
         }
     }

@@ -146,26 +146,28 @@ class TaskRepeater(
     ): TaskAssignment? {
         val mostRecentDueDateTime = mostRecentAssignment.dueDateTime
         val mostRecentMemberId = mostRecentAssignment.member.id
-        val newAssignmentDateTime =
-            getNewTime(task.repeatValue, task.repeatUnit, mostRecentDueDateTime, runDateTime) ?: return null
+        val newAssignmentDueDateTime =
+            getNewAssignmentDueDateTime(task.repeatValue, task.repeatUnit, mostRecentDueDateTime, runDateTime)
+                ?: return null
 
         if (!canAddNewAssignment(
                 task,
                 mostRecentAssignment.progressStatus,
-                newAssignmentDateTime,
+                newAssignmentDueDateTime,
                 runDateTime,
                 zoneId
             )
         ) {
             return null
         }
+
         val newAssignmentMember = if (task.rotateMember) {
             getNewAssignmentMemberId(task.houseId, mostRecentMemberId)
         } else {
             taskMember
         }
 
-        val dueDateTime = newAssignmentDateTime
+        val dueDateTime = newAssignmentDueDateTime
             .withNano(0)
         val progressStatus = if (house.status == ActiveStatus.PAUSED) {
             ProgressStatus.WONT_DO
@@ -184,7 +186,7 @@ class TaskRepeater(
         )
     }
 
-    private fun getNewTime(
+    private fun getNewAssignmentDueDateTime(
         repeatValue: Int,
         repeatUnit: RepeatUnit,
         mostRecentDueDateTime: LocalDateTime,

@@ -77,7 +77,7 @@ class TaskRoutes(
                         memberId,
                         rotateMember,
                         Instant.now(),
-                        status = ActiveStatus.ACTIVE
+                        status = ActiveStatus.ACTIVE // Adding new tasks with Active status as default for now
                     )
                 if (createdTask != null) {
                     call.respond(
