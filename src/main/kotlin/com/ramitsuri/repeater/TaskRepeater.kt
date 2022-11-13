@@ -3,15 +3,23 @@ package com.ramitsuri.repeater
 import com.ramitsuri.events.Event
 import com.ramitsuri.events.EventService
 import com.ramitsuri.extensions.Loggable
-import com.ramitsuri.extensions.isLaterThan
-import com.ramitsuri.models.*
+import com.ramitsuri.models.ActiveStatus
+import com.ramitsuri.models.CreateType
+import com.ramitsuri.models.House
+import com.ramitsuri.models.Member
+import com.ramitsuri.models.ProgressStatus
+import com.ramitsuri.models.RepeatUnit
+import com.ramitsuri.models.Task
+import com.ramitsuri.models.TaskAssignment
+import com.ramitsuri.repository.interfaces.HousesRepository
 import com.ramitsuri.repository.interfaces.MemberAssignmentsRepository
 import com.ramitsuri.repository.interfaces.MembersRepository
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import java.time.Instant
+import java.time.Duration
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
@@ -19,10 +27,11 @@ class TaskRepeater(
     private val eventService: EventService,
     private val tasksRepository: TasksRepository,
     private val membersRepository: MembersRepository,
+    private val housesRepository: HousesRepository,
     private val memberAssignmentsRepository: MemberAssignmentsRepository,
     private val taskAssignmentsRepository: TaskAssignmentsRepository,
     private val dispatcher: CoroutineDispatcher
-): Loggable {
+) : Loggable {
     override val log = logger()
 
     suspend fun start(
@@ -32,6 +41,7 @@ class TaskRepeater(
         val newAssignments = getNewAssignments(
             tasksRepository.get(),
             membersRepository.get(),
+            housesRepository.get(),
             taskAssignmentsRepository.get(),
             runDateTime,
             zoneId
@@ -60,6 +70,7 @@ class TaskRepeater(
     private suspend fun getNewAssignments(
         tasks: List<Task>,
         members: List<Member>,
+        houses: List<House>,
         taskAssignments: List<TaskAssignment>,
         runDateTime: ZonedDateTime,
         zoneId: ZoneId
@@ -67,18 +78,28 @@ class TaskRepeater(
         return withContext(dispatcher) {
             val assignmentsToAdd = mutableListOf<TaskAssignment>()
             for (task in tasks) {
+                if (task.status != ActiveStatus.ACTIVE) {
+                    // Not adding assignments for a task if no longer active
+                    continue
+                }
+                val house = houses.firstOrNull { it.id == task.houseId }
+                if (house == null || house.status == ActiveStatus.INACTIVE || house.status == ActiveStatus.UNKNOWN) {
+                    // Not adding assignments for houses that are no longer active or status is unknown
+                    continue
+                }
                 val mostRecentAssignment = taskAssignments
-                    .filter {it.task.id == task.id}
-                    .maxByOrNull {it.dueDateTime}
-                val taskMember = members.firstOrNull {it.id == task.memberId}
+                    .filter { it.task.id == task.id }
+                    .maxByOrNull { it.dueDateTime }
+                val taskMember = members.firstOrNull { it.id == task.memberId }
                 val newAssignment = if (taskMember == null) {
                     null
                 } else if (mostRecentAssignment == null) { // First ever assignment
-                    getFirstAssignment(task, taskMember, runDateTime)
+                    getFirstAssignment(task, taskMember, house, runDateTime)
                 } else {
                     getRepeatAssignment(
                         task,
                         taskMember,
+                        house,
                         runDateTime,
                         mostRecentAssignment,
                         zoneId
@@ -92,10 +113,20 @@ class TaskRepeater(
         }
     }
 
-    private fun getFirstAssignment(task: Task, member: Member, runDateTime: ZonedDateTime): TaskAssignment {
+    private fun getFirstAssignment(
+        task: Task,
+        member: Member,
+        house: House,
+        runDateTime: ZonedDateTime
+    ): TaskAssignment {
+        val progressStatus = if (house.status == ActiveStatus.PAUSED) {
+            ProgressStatus.WONT_DO
+        } else {
+            ProgressStatus.TODO
+        }
         return TaskAssignment(
             id = "",
-            progressStatus = ProgressStatus.TODO,
+            progressStatus = progressStatus,
             progressStatusDate = runDateTime.toInstant(),
             task = task,
             member = member,
@@ -108,64 +139,85 @@ class TaskRepeater(
     private suspend fun getRepeatAssignment(
         task: Task,
         taskMember: Member,
+        house: House,
         runDateTime: ZonedDateTime,
         mostRecentAssignment: TaskAssignment,
         zoneId: ZoneId
     ): TaskAssignment? {
-        val mostRecentDueDateTime = getZonedDateTime(mostRecentAssignment.dueDateTime, zoneId)
+        val mostRecentDueDateTime = mostRecentAssignment.dueDateTime
         val mostRecentMemberId = mostRecentAssignment.member.id
-        val newDateTime =
-            getNewTime(task.repeatValue, task.repeatUnit, mostRecentDueDateTime, runDateTime) ?: return null
+        val newAssignmentDueDateTime =
+            getNewAssignmentDueDateTime(task.repeatValue, task.repeatUnit, mostRecentDueDateTime, runDateTime)
+                ?: return null
 
-        if (!canRun(task, mostRecentAssignment.progressStatus, mostRecentDueDateTime, runDateTime)) {
+        if (!canAddNewAssignment(
+                task,
+                mostRecentAssignment.progressStatus,
+                newAssignmentDueDateTime,
+                runDateTime,
+                zoneId
+            )
+        ) {
             return null
         }
+
         val newAssignmentMember = if (task.rotateMember) {
             getNewAssignmentMemberId(task.houseId, mostRecentMemberId)
         } else {
             taskMember
         }
 
-        val dueDateTime = newDateTime
+        val dueDateTime = newAssignmentDueDateTime
             .withNano(0)
+        val progressStatus = if (house.status == ActiveStatus.PAUSED) {
+            ProgressStatus.WONT_DO
+        } else {
+            ProgressStatus.TODO
+        }
         return TaskAssignment(
             id = "",
-            progressStatus = ProgressStatus.TODO,
+            progressStatus = progressStatus,
             progressStatusDate = runDateTime.toInstant(),
             task = task,
             member = newAssignmentMember,
             createdDate = runDateTime.toInstant(),
             createType = CreateType.AUTO,
-            dueDateTime = dueDateTime.toInstant()
+            dueDateTime = dueDateTime
         )
     }
 
-    private fun getNewTime(
+    private fun getNewAssignmentDueDateTime(
         repeatValue: Int,
         repeatUnit: RepeatUnit,
-        mostRecentDueDateTime: ZonedDateTime,
+        mostRecentDueDateTime: LocalDateTime,
         runDateTime: ZonedDateTime
-    ): ZonedDateTime? {
+    ): LocalDateTime? {
         val repeatLong = repeatValue.toLong()
         return when (repeatUnit) {
             RepeatUnit.HOUR -> {
                 mostRecentDueDateTime.plusHours(repeatLong)
             }
+
             RepeatUnit.DAY -> {
                 mostRecentDueDateTime.plusDays(repeatLong)
             }
+
             RepeatUnit.WEEK -> {
                 mostRecentDueDateTime.plusWeeks(repeatLong)
             }
+
             RepeatUnit.MONTH -> {
                 mostRecentDueDateTime.plusMonths(repeatLong)
             }
+
             RepeatUnit.YEAR -> {
                 mostRecentDueDateTime.plusYears(repeatLong)
             }
+
             RepeatUnit.ON_COMPLETE -> {
-                runDateTime
+                runDateTime.toLocalDateTime()
             }
+
             RepeatUnit.NONE -> {
                 null
             }
@@ -173,7 +225,7 @@ class TaskRepeater(
     }
 
     private suspend fun getNewAssignmentMemberId(houseId: String, mostRecentAssignmentMemberId: String): Member {
-        val membersOfHouse = memberAssignmentsRepository.getForHouse(houseId).sortedBy {it.member.name}
+        val membersOfHouse = memberAssignmentsRepository.getForHouse(houseId).sortedBy { it.member.name }
         var indexOfNewMember = 0
         for ((index, member) in membersOfHouse.withIndex()) {
             if (member.member.id == mostRecentAssignmentMemberId) {
@@ -184,23 +236,27 @@ class TaskRepeater(
         return membersOfHouse[indexOfNewMember].member
     }
 
-    private fun getZonedDateTime(instant: Instant, zoneId: ZoneId): ZonedDateTime {
-        return ZonedDateTime.ofInstant(instant, zoneId)
-    }
-
-    private fun canRun(
+    private fun canAddNewAssignment(
         task: Task,
         mostRecentProgressStatus: ProgressStatus,
-        mostRecentDueDateTime: ZonedDateTime,
-        runDateTime: ZonedDateTime
+        newAssignmentDueDateTime: LocalDateTime,
+        runDateTime: ZonedDateTime,
+        timeZone: ZoneId
     ): Boolean {
-        // New assignment for a task can only be created if it's of repeat type OnComplete and its most recent assignment
-        // was complete, or it's regular repeating type and run date time is later than most recent due date time.
-        val isTaskRepeatOnComplete = task.repeatUnit == RepeatUnit.ON_COMPLETE
-        return if (isTaskRepeatOnComplete) {
-            mostRecentProgressStatus == ProgressStatus.DONE
-        } else {
-            runDateTime.isLaterThan(mostRecentDueDateTime)
+        // New assignment for a task can only be created if
+        // - it's of repeat type OnComplete and its most recent assignment was complete
+        // - it's regular repeating type and new due date time is before run date time (now)
+        // - it's regular repeating type and new due date time is less than equal to 7 days of run date time (now) in future
+        if (task.repeatUnit == RepeatUnit.ON_COMPLETE) {
+            return mostRecentProgressStatus == ProgressStatus.DONE
         }
+        // Add assignment if somehow it's due date time is in the past. Would happen if app stopped running
+        val newAssignmentDueDateTimeZoned = newAssignmentDueDateTime.atZone(timeZone)
+        if (newAssignmentDueDateTimeZoned <= runDateTime) {
+            return true
+        }
+        return Duration.between(runDateTime, newAssignmentDueDateTimeZoned) <= Duration.ofDays(7)
     }
+
+
 }

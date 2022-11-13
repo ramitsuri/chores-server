@@ -82,6 +82,7 @@ object Tasks : UUIDTable() {
     val memberId: Column<UUID> = uuid("memberId").references(Members.id)
     val rotateMember: Column<Boolean> = bool("rotateMember")
     val createdDate: Column<String> = varchar("createdDate", 50)
+    val activeStatus: Column<Int> = integer("activeStatus")
 }
 
 object TaskAssignments : UUIDTable() {

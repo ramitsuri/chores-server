@@ -1,5 +1,6 @@
 package com.ramitsuri.repository.local
 
+import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.House
 import com.ramitsuri.models.SyncResult
 import com.ramitsuri.repository.interfaces.HousesRepository
@@ -14,7 +15,11 @@ class LocalSyncRepository(
         val associatedLists = mutableSetOf<House>()
         val memberAssignments = memberAssignmentsRepository.getForMember(memberId)
         memberAssignments.forEach { memberAssignment ->
-            housesRepository.get(memberAssignment.houseId)?.let { associatedLists.add(it) }
+            housesRepository.get(memberAssignment.houseId)?.let { house ->
+                if (house.status == ActiveStatus.ACTIVE || house.status == ActiveStatus.PAUSED) {
+                    associatedLists.add(house)
+                }
+            }
         }
         return SyncResult(associatedLists = associatedLists.toList())
     }
@@ -23,7 +28,11 @@ class LocalSyncRepository(
         val associatedLists = mutableSetOf<House>()
         val memberAssignments = memberAssignmentsRepository.get()
         memberAssignments.forEach { memberAssignment ->
-            housesRepository.get(memberAssignment.houseId)?.let { associatedLists.add(it) }
+            housesRepository.get(memberAssignment.houseId)?.let {  house ->
+                if (house.status == ActiveStatus.ACTIVE || house.status == ActiveStatus.PAUSED) {
+                    associatedLists.add(house)
+                }
+            }
         }
         return SyncResult(associatedLists = associatedLists.toList())
     }

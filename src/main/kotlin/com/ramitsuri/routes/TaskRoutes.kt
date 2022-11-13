@@ -1,22 +1,27 @@
 package com.ramitsuri.routes
 
-import com.ramitsuri.data.InstantConverter
+import com.ramitsuri.data.LocalDateTimeConverter
 import com.ramitsuri.extensions.Loggable
+import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.Error
 import com.ramitsuri.models.ErrorCode
 import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.models.TaskDto
 import com.ramitsuri.repository.interfaces.TasksRepository
-import io.ktor.application.*
-import io.ktor.http.*
-import io.ktor.request.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.application.call
+import io.ktor.http.HttpStatusCode
+import io.ktor.request.receive
+import io.ktor.response.respond
+import io.ktor.routing.Route
+import io.ktor.routing.delete
+import io.ktor.routing.get
+import io.ktor.routing.post
+import io.ktor.routing.put
 import java.time.Instant
 
 class TaskRoutes(
     private val tasksRepository: TasksRepository,
-    private val instantConverter: InstantConverter
+    private val localDateTimeConverter: LocalDateTimeConverter
 ) : Routes(), Loggable {
     override val log = logger()
 
@@ -54,7 +59,7 @@ class TaskRoutes(
             val name = taskDto.name
             val description = taskDto.description
             val dueDateTime =
-                if (taskDto.dueDateTime != null) instantConverter.toMain(taskDto.dueDateTime) else null
+                if (taskDto.dueDateTime != null) localDateTimeConverter.toMain(taskDto.dueDateTime) else null
             val repeatValue = taskDto.repeatValue ?: 0
             val repeatUnit = RepeatUnit.fromKey(taskDto.repeatUnit ?: RepeatUnit.NONE.key)
             val houseId = taskDto.houseId
@@ -71,7 +76,8 @@ class TaskRoutes(
                         houseId,
                         memberId,
                         rotateMember,
-                        Instant.now()
+                        Instant.now(),
+                        status = ActiveStatus.ACTIVE // Adding new tasks with Active status as default for now
                     )
                 if (createdTask != null) {
                     call.respond(
@@ -123,7 +129,7 @@ class TaskRoutes(
             val name = taskDto.name ?: existingTask.name
             val description = taskDto.description ?: existingTask.description
             val dueDateTime =
-                if (taskDto.dueDateTime != null) instantConverter.toMain(taskDto.dueDateTime) else existingTask.dueDateTime
+                if (taskDto.dueDateTime != null) localDateTimeConverter.toMain(taskDto.dueDateTime) else existingTask.dueDateTime
             val repeatValue: Int
             val repeatUnit: RepeatUnit
             if (taskDto.repeatUnit == null || taskDto.repeatValue == null) {
@@ -134,8 +140,9 @@ class TaskRoutes(
                 repeatUnit = RepeatUnit.fromKey(taskDto.repeatUnit)
             }
             val rotateMember = taskDto.rotateMember ?: existingTask.rotateMember
+            val status = taskDto.status ?: existingTask.status
             val result =
-                tasksRepository.edit(id, name, description, dueDateTime, repeatValue, repeatUnit, rotateMember)
+                tasksRepository.edit(id, name, description, dueDateTime, repeatValue, repeatUnit, rotateMember, status)
             if (result == 1) {
                 call.respond(HttpStatusCode.OK)
             } else {

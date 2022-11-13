@@ -12,15 +12,17 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
-class TaskRepeaterTest: BaseRepeaterTest() {
+class TaskRepeaterTest : BaseRepeaterTest() {
 
     private val dispatcher = Dispatchers.Default
     private val baseInstant = Instant.ofEpochMilli(1614618000000) // Mon Mar 01 2021 17:00:00 UTC
+    private val baseLocalDateTime = LocalDateTime.ofInstant(baseInstant, zoneId) // Mon Mar 01 2021 17:00:00 UTC
     private lateinit var eventsService: TestEventsService
 
     @Before
@@ -31,6 +33,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
                 eventsService,
                 tasksRepository,
                 membersRepository,
+                housesRepository,
                 memberAssignmentsRepository,
                 taskAssignmentsRepository,
                 dispatcher
@@ -60,7 +63,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
     @Test
     fun testStart_shouldAddFirstAssignment_ifNoAssignmentsYetAndRunTimeBeforeDueTime() {
-        val taskDueDateTime = baseInstant.plusSeconds(3600)
+        val taskDueDateTime = baseLocalDateTime.plusSeconds(3600)
         val runDateTime = ZonedDateTime.ofInstant(baseInstant, zoneId)
         runBlocking {
             // Arrange
@@ -85,7 +88,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
     @Test
     fun testStart_shouldAddFirstAssignment_ifNoAssignmentsYetAndRunTimeAfterDueTime() {
-        val taskDueDateTime = baseInstant.minusSeconds(3600)
+        val taskDueDateTime = baseLocalDateTime.minusSeconds(3600)
         val runDateTime = ZonedDateTime.ofInstant(baseInstant, zoneId)
         runBlocking {
             // Arrange
@@ -110,7 +113,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
     @Test
     fun testStart_shouldAddFirstAssignment_ifNoAssignmentsYetAndRunTimeSameAsDueTime() {
-        val taskDueDateTime = baseInstant
+        val taskDueDateTime = baseLocalDateTime
         val runDateTime = ZonedDateTime.ofInstant(baseInstant, zoneId)
         runBlocking {
             // Arrange
@@ -135,7 +138,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
     @Test
     fun testStart_shouldHaveCorrectValuesFromTask_ifNoAssignmentsYet() {
-        val taskDueDateTime = baseInstant
+        val taskDueDateTime = baseLocalDateTime
         val runDateTime = ZonedDateTime.ofInstant(baseInstant, zoneId)
         runBlocking {
             // Arrange
@@ -165,9 +168,9 @@ class TaskRepeaterTest: BaseRepeaterTest() {
     }
 
     @Test
-    fun testStart_shouldNotAddAssignments_ifAssignmentsExistAndRunTimeLessThanMostRecentDueTime() {
-        val taskDueDateTime = baseInstant
-        val runDateTime = ZonedDateTime.ofInstant(baseInstant.minusSeconds(1), zoneId)
+    fun testStart_shouldNotAddAssignments_ifAssignmentsExistAndDurationBetweenRunTimeAndDueDateTimeMoreThan7Days() {
+        val taskDueDateTime = baseLocalDateTime.plusDays(7).plusSeconds(1)
+        val runDateTime = ZonedDateTime.ofInstant(baseInstant, zoneId)
         runBlocking {
             // Arrange
             addBasic()
@@ -184,7 +187,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
             addAssignment(
                 dueDate = taskDueDateTime,
-                createdDate = taskDueDateTime,
+                createdDate = baseInstant,
                 taskId = task.id,
                 memberId = member1.id
             )
@@ -199,7 +202,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
     @Test
     fun testStart_shouldAddNewAssignment_ifAssignmentsExistAndRunTimeAfterOrEqualMostRecentDueTime() {
-        val taskDueDateTime = baseInstant
+        val taskDueDateTime = baseLocalDateTime
         val runDateTime = ZonedDateTime.ofInstant(baseInstant.plusSeconds(24 * 3600), zoneId)
         runBlocking {
             // Arrange
@@ -217,7 +220,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
             addAssignment(
                 dueDate = taskDueDateTime,
-                createdDate = taskDueDateTime,
+                createdDate = baseInstant,
                 taskId = task.id,
                 memberId = member1.id
             )
@@ -232,7 +235,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
     @Test
     fun testStart_shouldAddNewAssignment_ifTaskRepeatOnCompleteAndMostRecentAssignmentCompleted() {
-        val taskDueDateTime = baseInstant
+        val taskDueDateTime = baseLocalDateTime
         val runDateTime = ZonedDateTime.ofInstant(baseInstant.minusSeconds(1), zoneId)
         runBlocking {
             // Arrange
@@ -251,7 +254,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
             addAssignment(
                 progressStatus = ProgressStatus.DONE,
                 dueDate = taskDueDateTime,
-                createdDate = taskDueDateTime,
+                createdDate = baseInstant,
                 taskId = task.id,
                 memberId = member1.id
             )
@@ -266,7 +269,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
     @Test
     fun testStart_shouldAddNewAssignmentOnlyOnce_ifTaskRepeatOnCompleteAndMostRecentAssignmentCompletedAndRepeaterRunMultipleTimes() {
-        val taskDueDateTime = baseInstant
+        val taskDueDateTime = baseLocalDateTime
         val runDateTime = ZonedDateTime.ofInstant(baseInstant.plusSeconds(1), zoneId)
         runBlocking {
             // Arrange
@@ -285,7 +288,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
             addAssignment(
                 progressStatus = ProgressStatus.DONE,
                 dueDate = taskDueDateTime,
-                createdDate = taskDueDateTime,
+                createdDate = baseInstant,
                 taskId = task.id,
                 memberId = member1.id
             )
@@ -301,7 +304,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
     @Test
     fun testStart_shouldAddNewAssignmentWithNewMember_ifTaskRepeatOnCompleteAndMostRecentAssignmentCompletedAndRotateMemberTrue() {
-        val taskDueDateTime = baseInstant
+        val taskDueDateTime = baseLocalDateTime
         val runDateTime = ZonedDateTime.ofInstant(baseInstant.plusSeconds(1), zoneId)
         runBlocking {
             // Arrange
@@ -320,7 +323,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
             addAssignment(
                 progressStatus = ProgressStatus.DONE,
                 dueDate = taskDueDateTime,
-                createdDate = taskDueDateTime,
+                createdDate = baseInstant,
                 taskId = task.id,
                 memberId = member1.id
             )
@@ -336,7 +339,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
     @Test
     fun testStart_shouldAddNewAssignmentWithSameMemberId_ifAssignmentsExistAndRotateMemberFalse() {
-        val taskDueDateTime = baseInstant
+        val taskDueDateTime = baseLocalDateTime
         val runDateTime = ZonedDateTime.ofInstant(baseInstant.plusSeconds(24 * 3600), zoneId)
         runBlocking {
             // Arrange
@@ -354,7 +357,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
             addAssignment(
                 dueDate = taskDueDateTime,
-                createdDate = taskDueDateTime,
+                createdDate = baseInstant,
                 taskId = task.id,
                 memberId = member1.id
             )
@@ -369,7 +372,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
     @Test
     fun testStart_shouldAddNewAssignmentWithDifferentMemberId_ifAssignmentsExistAndRotateMemberTrue() {
-        val taskDueDateTime = baseInstant
+        val taskDueDateTime = baseLocalDateTime
         val runDateTime = ZonedDateTime.ofInstant(baseInstant.plusSeconds(24 * 3600), zoneId)
         runBlocking {
             // Arrange
@@ -388,7 +391,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
             addAssignment(
                 dueDate = taskDueDateTime,
-                createdDate = taskDueDateTime,
+                createdDate = baseInstant,
                 taskId = task.id,
                 memberId = member1.id
             )
@@ -403,7 +406,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
     @Test
     fun testStart_shouldAddNewAssignmentWithCorrectDueDateTime() {
-        val taskDueDateTime = baseInstant
+        val taskDueDateTime = baseLocalDateTime
         val runDateTime = ZonedDateTime.ofInstant(baseInstant.plusSeconds(24 * 3600), zoneId)
         runBlocking {
             // Arrange
@@ -420,7 +423,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
             val task = tasksRepository.get()[0]
             addAssignment(
                 dueDate = taskDueDateTime,
-                createdDate = taskDueDateTime,
+                createdDate = baseInstant,
                 taskId = task.id,
                 memberId = member1.id
             )
@@ -430,13 +433,193 @@ class TaskRepeaterTest: BaseRepeaterTest() {
             val addedTaskAssignment = taskAssignmentsRepository.get()[1]
 
             // Assert
-            assertEquals(baseInstant.plusSeconds(12 * 3600), addedTaskAssignment.dueDateTime)
+            assertEquals(baseLocalDateTime.plusSeconds(12 * 3600), addedTaskAssignment.dueDateTime)
+        }
+    }
+
+    @Test
+    fun testStart_shouldNotAddNewAssignment_ifHouseInactive() {
+        val taskDueDateTime = baseLocalDateTime.plusSeconds(3600)
+        val runDateTime = ZonedDateTime.ofInstant(baseInstant, zoneId)
+        runBlocking {
+            // Arrange
+            addBasic(houseStatus = ActiveStatus.INACTIVE)
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "Task1",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                RepeatUnit.DAY,
+                member1.id,
+                rotateMember = false
+            )
+
+            // Act
+            taskRepeater.start(runDateTime, zoneId)
+
+            // Assert
+            assertEquals(0, taskAssignmentsRepository.get().size)
+        }
+    }
+
+    @Test
+    fun testStart_shouldNotAddNewAssignment_ifHouseStatusUnknown() {
+        val taskDueDateTime = baseLocalDateTime.plusSeconds(3600)
+        val runDateTime = ZonedDateTime.ofInstant(baseInstant, zoneId)
+        runBlocking {
+            // Arrange
+            addBasic(houseStatus = ActiveStatus.UNKNOWN)
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "Task1",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                RepeatUnit.DAY,
+                member1.id,
+                rotateMember = false
+            )
+
+            // Act
+            taskRepeater.start(runDateTime, zoneId)
+
+            // Assert
+            assertEquals(0, taskAssignmentsRepository.get().size)
+        }
+    }
+
+    @Test
+    fun testStart_shouldAddNewAssignmentWithStatusWontDo_ifHouseStatusPaused() {
+        val taskDueDateTime = baseLocalDateTime.plusSeconds(3600)
+        val runDateTime = ZonedDateTime.ofInstant(baseInstant, zoneId)
+        runBlocking {
+            // Arrange
+            addBasic(houseStatus = ActiveStatus.PAUSED)
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "Task1",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                RepeatUnit.DAY,
+                member1.id,
+                rotateMember = false
+            )
+
+            // Act
+            taskRepeater.start(runDateTime, zoneId)
+
+            // Assert
+            assertEquals(1, taskAssignmentsRepository.get().size)
+            assertEquals(ProgressStatus.WONT_DO, taskAssignmentsRepository.get()[0].progressStatus)
+        }
+    }
+
+    @Test
+    fun testStart_shouldAddNewAssignment_ifTaskStatusActive() {
+        val taskDueDateTime = baseLocalDateTime.plusSeconds(3600)
+        val runDateTime = ZonedDateTime.ofInstant(baseInstant, zoneId)
+        runBlocking {
+            // Arrange
+            addBasic(houseStatus = ActiveStatus.ACTIVE)
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "Task1",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                RepeatUnit.DAY,
+                member1.id,
+                rotateMember = false,
+                status = ActiveStatus.ACTIVE
+            )
+
+            // Act
+            taskRepeater.start(runDateTime, zoneId)
+
+            // Assert
+            assertEquals(1, taskAssignmentsRepository.get().size)
+        }
+    }
+
+    @Test
+    fun testStart_shouldNotAddNewAssignment_ifTaskStatusUnknown() {
+        val taskDueDateTime = baseLocalDateTime.plusSeconds(3600)
+        val runDateTime = ZonedDateTime.ofInstant(baseInstant, zoneId)
+        runBlocking {
+            // Arrange
+            addBasic(houseStatus = ActiveStatus.ACTIVE)
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "Task1",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                RepeatUnit.DAY,
+                member1.id,
+                rotateMember = false,
+                status = ActiveStatus.UNKNOWN
+            )
+
+            // Act
+            taskRepeater.start(runDateTime, zoneId)
+
+            // Assert
+            assertEquals(0, taskAssignmentsRepository.get().size)
+        }
+    }
+
+    @Test
+    fun testStart_shouldNotAddNewAssignment_ifTaskStatusInactive() {
+        val taskDueDateTime = baseLocalDateTime.plusSeconds(3600)
+        val runDateTime = ZonedDateTime.ofInstant(baseInstant, zoneId)
+        runBlocking {
+            // Arrange
+            addBasic(houseStatus = ActiveStatus.ACTIVE)
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "Task1",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                RepeatUnit.DAY,
+                member1.id,
+                rotateMember = false,
+                status = ActiveStatus.INACTIVE
+            )
+
+            // Act
+            taskRepeater.start(runDateTime, zoneId)
+
+            // Assert
+            assertEquals(0, taskAssignmentsRepository.get().size)
+        }
+    }
+
+    @Test
+    fun testStart_shouldNotAddNewAssignment_ifTaskStatusPaused() {
+        val taskDueDateTime = baseLocalDateTime.plusSeconds(3600)
+        val runDateTime = ZonedDateTime.ofInstant(baseInstant, zoneId)
+        runBlocking {
+            // Arrange
+            addBasic(houseStatus = ActiveStatus.ACTIVE)
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "Task1",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                RepeatUnit.DAY,
+                member1.id,
+                rotateMember = false,
+                status = ActiveStatus.PAUSED
+            )
+
+            // Act
+            taskRepeater.start(runDateTime, zoneId)
+
+            // Assert
+            assertEquals(0, taskAssignmentsRepository.get().size)
         }
     }
 
     @Test
     fun testStart_shouldNotifyEventsService_ifNewTasksAdded() {
-        val taskDueDateTime = baseInstant
+        val taskDueDateTime = baseLocalDateTime
         val runDateTime = ZonedDateTime.ofInstant(baseInstant.plusSeconds(24 * 3600), zoneId)
         runBlocking {
             // Arrange
@@ -453,7 +636,7 @@ class TaskRepeaterTest: BaseRepeaterTest() {
             val task = tasksRepository.get()[0]
             addAssignment(
                 dueDate = taskDueDateTime,
-                createdDate = taskDueDateTime,
+                createdDate = baseInstant,
                 taskId = task.id,
                 memberId = member1.id
             )
@@ -471,9 +654,12 @@ class TaskRepeaterTest: BaseRepeaterTest() {
         membersRepository.add(name, Instant.now())
     }
 
-    private suspend fun addHouseAndMemberAssignments(name: String) {
+    private suspend fun addHouseAndMemberAssignments(
+        houseName: String,
+        houseStatus: ActiveStatus = ActiveStatus.ACTIVE
+    ) {
         val members = membersRepository.get()
-        val house = housesRepository.add(name, members[0].id, Instant.now(), ActiveStatus.ACTIVE)
+        val house = housesRepository.add(houseName, members[0].id, Instant.now(), houseStatus)
         for (member in members) {
             memberAssignmentsRepository.add(member.id, house!!.id)
         }
@@ -481,11 +667,12 @@ class TaskRepeaterTest: BaseRepeaterTest() {
 
     private suspend fun addTask(
         name: String,
-        dueDateTime: Instant,
+        dueDateTime: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
         memberId: String,
-        rotateMember: Boolean
+        rotateMember: Boolean,
+        status: ActiveStatus = ActiveStatus.ACTIVE
     ) {
         val house = housesRepository.get().first()
         tasksRepository.add(
@@ -497,12 +684,13 @@ class TaskRepeaterTest: BaseRepeaterTest() {
             house.id,
             memberId,
             rotateMember,
-            Instant.now()
+            Instant.now(),
+            status
         )
     }
 
     private suspend fun addAssignment(
-        dueDate: Instant,
+        dueDate: LocalDateTime,
         createdDate: Instant,
         taskId: String,
         memberId: String,
@@ -519,9 +707,9 @@ class TaskRepeaterTest: BaseRepeaterTest() {
         )
     }
 
-    private suspend fun addBasic() {
+    private suspend fun addBasic(houseStatus: ActiveStatus = ActiveStatus.ACTIVE) {
         addMember("Member1")
         addMember("Member2")
-        addHouseAndMemberAssignments("House1")
+        addHouseAndMemberAssignments("House1", houseStatus)
     }
 }

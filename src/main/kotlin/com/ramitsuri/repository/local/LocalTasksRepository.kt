@@ -4,6 +4,7 @@ import com.ramitsuri.data.Converter
 import com.ramitsuri.data.DatabaseFactory.query
 import com.ramitsuri.data.Tasks
 import com.ramitsuri.extensions.Loggable
+import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.models.Task
 import com.ramitsuri.repository.interfaces.HousesRepository
@@ -11,24 +12,27 @@ import com.ramitsuri.repository.interfaces.TasksRepository
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.InsertStatement
 import java.time.Instant
+import java.time.LocalDateTime
 import java.util.*
 
 class LocalTasksRepository(
     private val housesRepository: HousesRepository,
     private val instantConverter: Converter<Instant, String>,
+    private val localDateTimeConverter: Converter<LocalDateTime, String>,
     private val uuidConverter: Converter<String, UUID>
 ) : TasksRepository, Loggable {
     override val log = logger()
     override suspend fun add(
         name: String,
         description: String,
-        dueDate: Instant,
+        dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
         houseId: String,
         memberId: String,
         rotateMember: Boolean,
-        createdDate: Instant
+        createdDate: Instant,
+        status: ActiveStatus
     ): Task? {
         if (housesRepository.get(houseId) == null) {
             log.warning("HouseId doesn't belong to a house")
@@ -39,13 +43,14 @@ class LocalTasksRepository(
             statement = Tasks.insert { task ->
                 task[Tasks.name] = name
                 task[Tasks.description] = description
-                task[Tasks.dueDate] = instantConverter.toStorage(dueDate)
+                task[Tasks.dueDate] = localDateTimeConverter.toStorage(dueDate)
                 task[Tasks.repeatValue] = repeatValue
                 task[Tasks.repeatUnit] = repeatUnit.key
                 task[Tasks.houseId] = uuidConverter.toStorage(houseId)
                 task[Tasks.memberId] = uuidConverter.toStorage(memberId)
                 task[Tasks.rotateMember] = rotateMember
                 task[Tasks.createdDate] = instantConverter.toStorage(createdDate)
+                task[Tasks.activeStatus] = status.key
             }
         }
         statement?.resultedValues?.get(0)?.let {
@@ -73,20 +78,22 @@ class LocalTasksRepository(
         id: String,
         name: String,
         description: String,
-        dueDate: Instant,
+        dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
-        rotateMember: Boolean
+        rotateMember: Boolean,
+        status: ActiveStatus
     ): Int {
         return query {
             val uuid = uuidConverter.toStorage(id)
             Tasks.update({ Tasks.id.eq(uuid) }) { task ->
                 task[Tasks.name] = name
                 task[Tasks.description] = description
-                task[Tasks.dueDate] = instantConverter.toStorage(dueDate)
+                task[Tasks.dueDate] = localDateTimeConverter.toStorage(dueDate)
                 task[Tasks.repeatValue] = repeatValue
                 task[Tasks.repeatUnit] = repeatUnit.key
                 task[Tasks.rotateMember] = rotateMember
+                task[Tasks.activeStatus] = status.key
             }
         }
     }
@@ -123,11 +130,12 @@ class LocalTasksRepository(
         val houseId = row[Tasks.houseId]
         val memberId = row[Tasks.memberId]
         val description = row[Tasks.description]
-        val dueDate = instantConverter.toMain(row[Tasks.dueDate])
+        val dueDate = localDateTimeConverter.toMain(row[Tasks.dueDate])
         val repeatValue = row[Tasks.repeatValue]
         val repeatUnit = RepeatUnit.fromKey(row[Tasks.repeatUnit])
         val createdDate = instantConverter.toMain(row[Tasks.createdDate])
         val rotateMember = row[Tasks.rotateMember]
+        val status = ActiveStatus.fromKey(row[Tasks.activeStatus])
         return Task(
             id.toString(),
             name,
@@ -138,7 +146,8 @@ class LocalTasksRepository(
             houseId.toString(),
             memberId.toString(),
             rotateMember,
-            createdDate
+            createdDate,
+            status
         )
     }
 }

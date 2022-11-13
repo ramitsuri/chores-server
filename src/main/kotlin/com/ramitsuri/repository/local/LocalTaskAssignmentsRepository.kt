@@ -3,12 +3,15 @@ package com.ramitsuri.repository.local
 import com.ramitsuri.data.Converter
 import com.ramitsuri.data.DatabaseFactory
 import com.ramitsuri.data.TaskAssignments
+import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.CreateType
+import com.ramitsuri.models.House
 import com.ramitsuri.models.Member
 import com.ramitsuri.models.ProgressStatus
 import com.ramitsuri.models.Task
 import com.ramitsuri.models.TaskAssignment
 import com.ramitsuri.models.TaskAssignmentDto
+import com.ramitsuri.repository.interfaces.HousesRepository
 import com.ramitsuri.repository.interfaces.MembersRepository
 import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
@@ -25,12 +28,15 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.InsertStatement
 import org.jetbrains.exposed.sql.update
 import java.time.Instant
+import java.time.LocalDateTime
 import java.util.UUID
 
 class LocalTaskAssignmentsRepository(
     private val tasksRepository: TasksRepository,
     private val membersRepository: MembersRepository,
+    private val housesRepository: HousesRepository,
     private val instantConverter: Converter<Instant, String>,
+    private val localDateTimeConverter: Converter<LocalDateTime, String>,
     private val uuidConverter: Converter<String, UUID>
 ) : TaskAssignmentsRepository {
     override suspend fun add(
@@ -38,7 +44,7 @@ class LocalTaskAssignmentsRepository(
         statusDate: Instant,
         taskId: String,
         memberId: String,
-        dueDate: Instant,
+        dueDate: LocalDateTime,
         createdDate: Instant,
         createType: CreateType
     ): TaskAssignment? {
@@ -51,7 +57,7 @@ class LocalTaskAssignmentsRepository(
                 taskAssignment[TaskAssignments.statusDate] = instantConverter.toStorage(statusDate)
                 taskAssignment[TaskAssignments.taskId] = uuidConverter.toStorage(taskId)
                 taskAssignment[TaskAssignments.memberId] = uuidConverter.toStorage(memberId)
-                taskAssignment[TaskAssignments.dueDate] = instantConverter.toStorage(dueDate)
+                taskAssignment[TaskAssignments.dueDate] = localDateTimeConverter.toStorage(dueDate)
                 taskAssignment[TaskAssignments.createdDate] = instantConverter.toStorage(createdDate)
                 taskAssignment[TaskAssignments.createType] = createType.key
             }
@@ -143,7 +149,14 @@ class LocalTaskAssignmentsRepository(
 
     override suspend fun get(filter: TaskAssignmentFilter): List<TaskAssignment> {
         val members = membersRepository.get()
-        val tasks = tasksRepository.get()
+        val houses = housesRepository.get()
+        val houseIdsFiltered = if (filter.onlyActiveAndPausedHouse) {
+            houses.filter { it.status == ActiveStatus.ACTIVE || it.status == ActiveStatus.PAUSED }
+                .map { it.id }
+        } else {
+            houses.map { it.id }
+        }
+        val tasks = tasksRepository.getForHouses(houseIdsFiltered)
         return DatabaseFactory.query {
             var query = TaskAssignments
                 .selectAll()
@@ -173,8 +186,16 @@ class LocalTaskAssignmentsRepository(
 
     override suspend fun getForHouse(filter: TaskAssignmentFilter, houseIds: List<String>): List<TaskAssignment> {
         val members = membersRepository.get()
+        val houses = housesRepository.get()
+        val houseIdsFiltered = if (filter.onlyActiveAndPausedHouse) {
+            houses.filter { houseIds.contains(it.id) }
+                .filter { it.status == ActiveStatus.ACTIVE || it.status == ActiveStatus.PAUSED }
+                .map { it.id }
+        } else {
+            houseIds
+        }
         // Get tasks that belong to the houses provided
-        val tasks = tasksRepository.getForHouses(houseIds)
+        val tasks = tasksRepository.getForHouses(houseIdsFiltered)
         val taskIdUuids = tasks.map { uuidConverter.toStorage(it.id) }
         return DatabaseFactory.query {
             var query = TaskAssignments
@@ -211,7 +232,7 @@ class LocalTaskAssignmentsRepository(
         val id = row[TaskAssignments.id].toString()
         val statusDate = instantConverter.toMain(row[TaskAssignments.statusDate])
         val progressStatus = ProgressStatus.fromKey(row[TaskAssignments.statusType])
-        val dueDate = instantConverter.toMain(row[TaskAssignments.dueDate])
+        val dueDate = localDateTimeConverter.toMain(row[TaskAssignments.dueDate])
         val createdDate = instantConverter.toMain(row[TaskAssignments.createdDate])
         val createType = CreateType.fromKey(row[TaskAssignments.createType])
         return TaskAssignment(id, progressStatus, statusDate, task, member, dueDate, createdDate, createType)

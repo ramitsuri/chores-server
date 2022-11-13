@@ -5,6 +5,7 @@ import com.ramitsuri.models.ProgressStatus
 import com.ramitsuri.models.TaskAssignment
 import com.ramitsuri.models.TaskAssignmentDto
 import java.time.Instant
+import java.time.LocalDateTime
 
 interface TaskAssignmentsRepository {
     suspend fun add(
@@ -12,7 +13,7 @@ interface TaskAssignmentsRepository {
         statusDate: Instant,
         taskId: String,
         memberId: String,
-        dueDate: Instant,
+        dueDate: LocalDateTime,
         createdDate: Instant,
         createType: CreateType
     ): TaskAssignment?
@@ -38,5 +39,6 @@ interface TaskAssignmentsRepository {
 data class TaskAssignmentFilter(
     val memberId: String? = null,
     val notMemberId: String? = null,
-    val progressStatus: ProgressStatus = ProgressStatus.UNKNOWN
+    val progressStatus: ProgressStatus = ProgressStatus.UNKNOWN,
+    val onlyActiveAndPausedHouse: Boolean
 )

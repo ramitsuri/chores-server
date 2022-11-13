@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.LocalDateTime
 
 class DummyRepository(
     private val membersRepository: MembersRepository,
@@ -35,37 +36,40 @@ class DummyRepository(
                     tasksRepository.add(
                         "Toilet Bowl",
                         "Clean toilet bowls",
-                        Instant.now().plusSeconds(3600),
+                        LocalDateTime.now().plusSeconds(3600),
                         2,
                         RepeatUnit.WEEK,
                         house1.id,
                         member1.id,
                         true,
-                        Instant.now()
+                        Instant.now(),
+                        ActiveStatus.ACTIVE
                     )
                 val task2 =
                     tasksRepository.add(
                         "Kitchen Sink",
                         "Clean kitchen sink",
-                        Instant.now().plusSeconds(7200),
+                        LocalDateTime.now().plusSeconds(7200),
                         3,
                         RepeatUnit.WEEK,
                         house1.id,
                         member1.id,
                         true,
-                        Instant.now()
+                        Instant.now(),
+                        ActiveStatus.ACTIVE
                     )
                 val task3 =
                     tasksRepository.add(
                         "Kitchen Counter",
                         "Clean kitchen counter",
-                        Instant.now().plusSeconds(7200),
+                        LocalDateTime.now().plusSeconds(7200),
                         1,
                         RepeatUnit.DAY,
                         house1.id,
                         member2.id,
                         false,
-                        Instant.now()
+                        Instant.now(),
+                        ActiveStatus.ACTIVE
                     )
 
                 // Task Assignments
