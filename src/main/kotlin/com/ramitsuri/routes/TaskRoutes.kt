@@ -140,7 +140,11 @@ class TaskRoutes(
                 repeatUnit = RepeatUnit.fromKey(taskDto.repeatUnit)
             }
             val rotateMember = taskDto.rotateMember ?: existingTask.rotateMember
-            val status = taskDto.status ?: existingTask.status
+            val status = if (taskDto.status == null) {
+                existingTask.status
+            } else {
+                ActiveStatus.fromKey(taskDto.status)
+            }
             val result =
                 tasksRepository.edit(id, name, description, dueDateTime, repeatValue, repeatUnit, rotateMember, status)
             if (result == 1) {

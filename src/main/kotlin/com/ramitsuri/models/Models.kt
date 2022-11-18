@@ -78,7 +78,7 @@ data class TaskDto(
     val houseId: String?,
     val memberId: String?,
     val rotateMember: Boolean?,
-    val status: ActiveStatus?
+    val status: Int?
 )
 
 @Serializable
