@@ -23,7 +23,7 @@ fun main() {
         //appContainer.getTaskScheduler().schedule()
         appContainer.getDbMigration().migrateInstantDueDateToLocalDateTime()
     }
-    /*embeddedServer(appContainer.getApplicationEngine(), port = 8081, configure = {
+    embeddedServer(appContainer.getApplicationEngine(), port = 8081, configure = {
         connectionGroupSize = 2
         workerGroupSize = 5
         callGroupSize = 10
@@ -35,7 +35,7 @@ fun main() {
         configureSerialization()
         // Uncomment to log routes
         //logRoutes()
-    }.start(wait = true)*/
+    }.start(wait = true)
 }
 
 private fun Application.logRoutes(){
