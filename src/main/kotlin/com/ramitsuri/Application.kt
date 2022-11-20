@@ -20,8 +20,7 @@ fun main() {
         environment.getDbPassword()
     )
     CoroutineScope(Dispatchers.Default).launch {
-        //appContainer.getTaskScheduler().schedule()
-        appContainer.getDbMigration().migrateInstantDueDateToLocalDateTime()
+        appContainer.getTaskScheduler().schedule()
     }
     embeddedServer(appContainer.getApplicationEngine(), port = 8081, configure = {
         connectionGroupSize = 2
