@@ -2,6 +2,7 @@ package com.ramitsuri.di
 
 import com.ramitsuri.Constants
 import com.ramitsuri.data.DatabaseFactory
+import com.ramitsuri.data.DbMigration
 import com.ramitsuri.data.InstantConverter
 import com.ramitsuri.data.LocalDateTimeConverter
 import com.ramitsuri.data.UuidConverter
@@ -109,5 +110,9 @@ class AppContainer {
     @OptIn(EngineAPI::class)
     fun getApplicationEngine(): Netty {
         return Netty
+    }
+
+    fun getDbMigration(): DbMigration {
+        return DbMigration(instantConverter, localDateTimeConverter, uuidConverter)
     }
 }
