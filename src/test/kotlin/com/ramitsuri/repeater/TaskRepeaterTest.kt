@@ -13,6 +13,7 @@ import org.junit.Before
 import org.junit.Test
 import java.time.Instant
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -647,6 +648,40 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             // Assert
             assertEquals(1, eventsService.getEvents().size)
             assertTrue(eventsService.getEvents()[0] is Event.AssignmentsAdded)
+        }
+    }
+
+    @Test
+    fun testStart_shouldAddAssignmentsWithSameDueDateTime_ifDSTChanges() {
+        val taskDueDateTime = LocalDateTime.parse("2022-09-28T07:00")
+        runBlocking {
+            // Arrange
+            addBasic()
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "Task1",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                RepeatUnit.DAY,
+                member1.id,
+                rotateMember = false
+            )
+            val taskId = tasksRepository.get()[0].id
+            // An assignment already there before DST switch happens on 11-06
+            addAssignment(
+                dueDate = LocalDateTime.parse("2022-11-05T07:00"),
+                createdDate = baseInstant,
+                taskId = taskId,
+                memberId = member1.id
+            )
+
+            // Act
+            val runTime = LocalDateTime.parse("2022-11-06T08:00").atZone(zoneId)
+            taskRepeater.start(runTime, zoneId)
+
+            // Assert
+            val addedAssignment = taskAssignmentsRepository.get()[1]
+            assertEquals(LocalTime.of(7, 0), addedAssignment.dueDateTime.toLocalTime())
         }
     }
 
