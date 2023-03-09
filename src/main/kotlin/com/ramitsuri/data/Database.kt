@@ -8,6 +8,7 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Database.Companion.connect
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
@@ -49,6 +50,14 @@ object DatabaseFactory {
         return withContext(Dispatchers.IO) {
             transaction {
                 block()
+            }
+        }
+    }
+
+    suspend fun <T> queryWithTransaction(block: (Transaction) -> T): T {
+        return withContext(Dispatchers.IO) {
+            transaction {
+                block(this)
             }
         }
     }

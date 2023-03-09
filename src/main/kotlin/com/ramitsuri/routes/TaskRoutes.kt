@@ -8,6 +8,7 @@ import com.ramitsuri.models.ErrorCode
 import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.models.TaskDto
 import com.ramitsuri.repository.interfaces.TasksRepository
+import com.ramitsuri.repository.interfaces.TasksTaskAssignmentsRepository
 import io.ktor.application.call
 import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
@@ -21,6 +22,7 @@ import java.time.Instant
 
 class TaskRoutes(
     private val tasksRepository: TasksRepository,
+    private val tasksTaskAssignmentsRepository: TasksTaskAssignmentsRepository,
     private val localDateTimeConverter: LocalDateTimeConverter
 ) : Routes(), Loggable {
     override val log = logger()
@@ -110,8 +112,8 @@ class TaskRoutes(
                 invalidIdParamError.first,
                 invalidIdParamError.second
             )
-            val result = tasksRepository.delete(id)
-            if (result == 1) {
+            val result = tasksTaskAssignmentsRepository.delete(id)
+            if (result) {
                 call.respond(HttpStatusCode.OK)
             } else {
                 call.respond(HttpStatusCode.NotFound)
@@ -126,28 +128,62 @@ class TaskRoutes(
             )
             val existingTask = tasksRepository.get(id) ?: return@put call.respond(HttpStatusCode.NotFound)
             val taskDto = call.receive<TaskDto>()
+
+            var shouldDeleteTaskAssignments = false
+
             val name = taskDto.name ?: existingTask.name
+
             val description = taskDto.description ?: existingTask.description
-            val dueDateTime =
-                if (taskDto.dueDateTime != null) localDateTimeConverter.toMain(taskDto.dueDateTime) else existingTask.dueDateTime
-            val repeatValue: Int
-            val repeatUnit: RepeatUnit
-            if (taskDto.repeatUnit == null || taskDto.repeatValue == null) {
-                repeatValue = existingTask.repeatValue
-                repeatUnit = existingTask.repeatUnit
+
+            val dueDateTime = if (taskDto.dueDateTime != null) {
+                shouldDeleteTaskAssignments = true
+                localDateTimeConverter.toMain(taskDto.dueDateTime)
             } else {
-                repeatValue = taskDto.repeatValue
-                repeatUnit = RepeatUnit.fromKey(taskDto.repeatUnit)
+                existingTask.dueDateTime
             }
-            val rotateMember = taskDto.rotateMember ?: existingTask.rotateMember
-            val status = if (taskDto.status == null) {
-                existingTask.status
+            val repeatUnit = if (taskDto.repeatUnit != null) {
+                shouldDeleteTaskAssignments = true
+                RepeatUnit.fromKey(taskDto.repeatUnit)
             } else {
+                existingTask.repeatUnit
+            }
+            val repeatValue = if (taskDto.repeatValue != null) {
+                shouldDeleteTaskAssignments = true
+                taskDto.repeatValue
+            } else {
+                existingTask.repeatValue
+            }
+
+            val rotateMember = if (taskDto.rotateMember != null) {
+                shouldDeleteTaskAssignments = true
+                taskDto.rotateMember
+            } else {
+                existingTask.rotateMember
+            }
+
+            val status = if (taskDto.status != null) {
+                shouldDeleteTaskAssignments = true
                 ActiveStatus.fromKey(taskDto.status)
+            } else {
+                existingTask.status
             }
-            val result =
+
+            val result = if (shouldDeleteTaskAssignments) {
+                tasksTaskAssignmentsRepository.edit(
+                    id,
+                    name,
+                    description,
+                    dueDateTime,
+                    repeatValue,
+                    repeatUnit,
+                    rotateMember,
+                    status
+                )
+            } else {
                 tasksRepository.edit(id, name, description, dueDateTime, repeatValue, repeatUnit, rotateMember, status)
-            if (result == 1) {
+            }
+
+            if (result) {
                 call.respond(HttpStatusCode.OK)
             } else {
                 call.respond(HttpStatusCode.NotFound)

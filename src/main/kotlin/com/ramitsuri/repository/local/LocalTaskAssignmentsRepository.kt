@@ -59,6 +59,7 @@ class LocalTaskAssignmentsRepository(
                 taskAssignment[TaskAssignments.dueDate] = localDateTimeConverter.toStorage(dueDate)
                 taskAssignment[TaskAssignments.createdDate] = instantConverter.toStorage(createdDate)
                 taskAssignment[TaskAssignments.createType] = createType.key
+                taskAssignment[TaskAssignments.statusByMember] = null
             }
         }
         statement?.resultedValues?.get(0)?.let {

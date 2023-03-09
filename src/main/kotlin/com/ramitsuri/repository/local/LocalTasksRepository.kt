@@ -9,11 +9,17 @@ import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.models.Task
 import com.ramitsuri.repository.interfaces.HousesRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.deleteAll
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.InsertStatement
+import org.jetbrains.exposed.sql.update
 import java.time.Instant
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 class LocalTasksRepository(
     private val housesRepository: HousesRepository,
@@ -67,10 +73,10 @@ class LocalTasksRepository(
         }
     }
 
-    override suspend fun delete(id: String): Int {
+    override suspend fun delete(id: String): Boolean {
         return query {
             val uuid = uuidConverter.toStorage(id)
-            Tasks.deleteWhere { Tasks.id.eq(uuid) }
+            Tasks.deleteWhere { Tasks.id.eq(uuid) } > 0
         }
     }
 
@@ -83,7 +89,7 @@ class LocalTasksRepository(
         repeatUnit: RepeatUnit,
         rotateMember: Boolean,
         status: ActiveStatus
-    ): Int {
+    ): Boolean {
         return query {
             val uuid = uuidConverter.toStorage(id)
             Tasks.update({ Tasks.id.eq(uuid) }) { task ->
@@ -94,7 +100,7 @@ class LocalTasksRepository(
                 task[Tasks.repeatUnit] = repeatUnit.key
                 task[Tasks.rotateMember] = rotateMember
                 task[Tasks.activeStatus] = status.key
-            }
+            } > 0
         }
     }
 

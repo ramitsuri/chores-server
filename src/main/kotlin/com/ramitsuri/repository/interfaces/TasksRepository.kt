@@ -22,7 +22,7 @@ interface TasksRepository {
 
     suspend fun delete(): Int
 
-    suspend fun delete(id: String): Int
+    suspend fun delete(id: String): Boolean
 
     suspend fun edit(
         id: String,
@@ -33,7 +33,7 @@ interface TasksRepository {
         repeatUnit: RepeatUnit,
         rotateMember: Boolean,
         status: ActiveStatus
-    ): Int
+    ): Boolean
 
     suspend fun get(): List<Task>
 
