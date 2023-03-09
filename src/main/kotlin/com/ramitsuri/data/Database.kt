@@ -40,7 +40,8 @@ object DatabaseFactory {
             MemberAssignments,
             Tasks,
             TaskAssignments,
-            RunTimeLogs
+            RunTimeLogs,
+            PushMessageTokens
         )
     }
 
@@ -97,4 +98,10 @@ object TaskAssignments : UUIDTable() {
 
 object RunTimeLogs : IntIdTable() {
     val runTime: Column<String> = varchar("runDate", 50)
+}
+
+object PushMessageTokens: IntIdTable(){
+    val memberId: Column<UUID> = uuid("memberId").references(Members.id)
+    val deviceId: Column<UUID> = uuid("deviceId")
+    val token: Column<String> = text("token")
 }

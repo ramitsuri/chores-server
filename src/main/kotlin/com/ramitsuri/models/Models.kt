@@ -107,6 +107,19 @@ data class TaskAssignmentDto(
 )
 
 @Serializable
+data class PushMessageToken(
+    val memberId: String,
+    val deviceId: String,
+    val token: String
+)
+
+@Serializable
+data class PushMessageTokenDto(
+    val deviceId: String,
+    val token: String
+)
+
+@Serializable
 data class Error(
     @Serializable(with = ErrorCodeSerializer::class)
     val code: ErrorCode, val message: String

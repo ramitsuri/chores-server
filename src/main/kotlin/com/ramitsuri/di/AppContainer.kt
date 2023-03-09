@@ -52,6 +52,7 @@ class AppContainer {
         TaskAssignmentAccessController(memberAssignmentsRepository, taskAssignmentsRepository, membersRepository)
     private val syncRepository = LocalSyncRepository(memberAssignmentsRepository, housesRepository)
     private val syncAccessController = SyncAccessController(syncRepository, membersRepository)
+    private val pushMessageTokenRepository = LocalPushMessageTokenRepository(uuidConverter)
     private val dummyRepository = DummyRepository(
         membersRepository,
         housesRepository,
@@ -79,7 +80,8 @@ class AppContainer {
             TaskAssignmentRoutes(taskAssignmentsAccessController),
             MemberAssignmentRoutes(memberAssignmentsRepository),
             LoginRoutes(jwtService, membersRepository),
-            SyncRoutes(syncAccessController)
+            SyncRoutes(syncAccessController),
+            PushMessageTokenRoute(pushMessageTokenRepository)
             //DummyRoutes(dummyRepository),
         )
     }
