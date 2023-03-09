@@ -34,12 +34,6 @@ class LocalMemberAssignmentsRepository(
         return null
     }
 
-    override suspend fun delete(): Int {
-        return DatabaseFactory.query {
-            MemberAssignments.deleteAll()
-        }
-    }
-
     override suspend fun delete(id: String): Int {
         return DatabaseFactory.query {
             val uuid = uuidConverter.toStorage(id)

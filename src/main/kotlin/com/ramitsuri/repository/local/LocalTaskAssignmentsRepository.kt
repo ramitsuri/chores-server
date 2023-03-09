@@ -68,12 +68,6 @@ class LocalTaskAssignmentsRepository(
         return null
     }
 
-    override suspend fun delete(): Int {
-        return DatabaseFactory.query {
-            TaskAssignments.deleteAll()
-        }
-    }
-
     override suspend fun edit(taskAssignments: List<TaskAssignmentDto>): List<String> {
         val updatedIds = mutableListOf<String>()
         DatabaseFactory.query {

@@ -5,8 +5,6 @@ import com.ramitsuri.models.MemberAssignment
 interface MemberAssignmentsRepository {
     suspend fun add(memberId: String, houseId: String): MemberAssignment?
 
-    suspend fun delete(): Int
-
     suspend fun delete(id: String): Int
 
     suspend fun get(): List<MemberAssignment>

@@ -18,8 +18,6 @@ interface TaskAssignmentsRepository {
         createType: CreateType
     ): TaskAssignment?
 
-    suspend fun delete(): Int
-
     suspend fun edit(taskAssignments: List<TaskAssignmentDto>): List<String>
 
     // Edit will be applied if the assignment is assigned to the requester member

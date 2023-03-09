@@ -29,7 +29,7 @@ class TestHousesRepository: BaseTestRepository<House>(), HousesRepository {
         }
     }
 
-    override suspend fun delete(): Int {
+    fun delete(): Int {
         val size = storage.size
         storage.clear()
         return size

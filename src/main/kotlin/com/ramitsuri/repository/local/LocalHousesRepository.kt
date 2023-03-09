@@ -43,12 +43,6 @@ class LocalHousesRepository(
         }
     }
 
-    override suspend fun delete(): Int {
-        return query {
-            Houses.deleteAll()
-        }
-    }
-
     override suspend fun edit(id: String, name: String): Int {
         return query {
             val uuid = uuidConverter.toStorage(id)

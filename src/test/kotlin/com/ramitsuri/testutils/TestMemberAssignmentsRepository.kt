@@ -19,7 +19,7 @@ class TestMemberAssignmentsRepository(
         return new
     }
 
-    override suspend fun delete(): Int {
+    fun delete(): Int {
         val size = storage.size
         storage.clear()
         return size

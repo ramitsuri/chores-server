@@ -9,8 +9,6 @@ interface HousesRepository {
 
     suspend fun delete(id: String): Int
 
-    suspend fun delete(): Int
-
     suspend fun edit(id: String, name: String): Int
 
     suspend fun get(): List<House>
