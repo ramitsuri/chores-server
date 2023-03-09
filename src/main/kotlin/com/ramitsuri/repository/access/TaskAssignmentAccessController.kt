@@ -40,10 +40,10 @@ class TaskAssignmentAccessController(
             }
             Access.READ_HOUSE_WRITE_HOUSE -> {
                 val houseIds = memberAssignmentsRepository.getForMember(requesterMemberId).map { it.houseId }
-                AccessResult.Success(taskAssignmentsRepository.editForHouse(taskAssignments, houseIds))
+                AccessResult.Success(taskAssignmentsRepository.editForHouse(taskAssignments, houseIds, requesterMemberId))
             }
             Access.READ_ALL_WRITE_ALL -> {
-                AccessResult.Success(taskAssignmentsRepository.edit(taskAssignments))
+                AccessResult.Success(taskAssignmentsRepository.edit(taskAssignments, requesterMemberId))
             }
         }
     }

@@ -50,7 +50,7 @@ class TestTaskAssignmentsRepository(
         TODO("Not yet implemented")
     }
 
-    override suspend fun edit(taskAssignments: List<TaskAssignmentDto>): List<String> {
+    override suspend fun edit(taskAssignments: List<TaskAssignmentDto>, requesterMemberId: String): List<String> {
         TODO("Not yet implemented")
     }
 
@@ -58,7 +58,11 @@ class TestTaskAssignmentsRepository(
         TODO("Not yet implemented")
     }
 
-    override suspend fun editForHouse(taskAssignments: List<TaskAssignmentDto>, houseIds: List<String>): List<String> {
+    override suspend fun editForHouse(
+        taskAssignments: List<TaskAssignmentDto>,
+        houseIds: List<String>,
+        requesterMemberId: String
+    ): List<String> {
         TODO("Not yet implemented")
     }
 }

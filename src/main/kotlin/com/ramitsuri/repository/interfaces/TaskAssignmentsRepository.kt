@@ -18,13 +18,17 @@ interface TaskAssignmentsRepository {
         createType: CreateType
     ): TaskAssignment?
 
-    suspend fun edit(taskAssignments: List<TaskAssignmentDto>): List<String>
+    suspend fun edit(taskAssignments: List<TaskAssignmentDto>, requesterMemberId: String): List<String>
 
     // Edit will be applied if the assignment is assigned to the requester member
     suspend fun editOwn(taskAssignments: List<TaskAssignmentDto>, requesterMemberId: String): List<String>
 
     // Edit will be applied if the assignment's task belongs to requester member's houses
-    suspend fun editForHouse(taskAssignments: List<TaskAssignmentDto>, houseIds: List<String>): List<String>
+    suspend fun editForHouse(
+        taskAssignments: List<TaskAssignmentDto>,
+        houseIds: List<String>,
+        requesterMemberId: String
+    ): List<String>
 
     suspend fun get(): List<TaskAssignment>
 

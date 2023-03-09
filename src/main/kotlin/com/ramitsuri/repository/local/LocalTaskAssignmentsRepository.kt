@@ -5,7 +5,6 @@ import com.ramitsuri.data.DatabaseFactory
 import com.ramitsuri.data.TaskAssignments
 import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.CreateType
-import com.ramitsuri.models.House
 import com.ramitsuri.models.Member
 import com.ramitsuri.models.ProgressStatus
 import com.ramitsuri.models.Task
@@ -68,14 +67,16 @@ class LocalTaskAssignmentsRepository(
         return null
     }
 
-    override suspend fun edit(taskAssignments: List<TaskAssignmentDto>): List<String> {
+    override suspend fun edit(taskAssignments: List<TaskAssignmentDto>, requesterMemberId: String): List<String> {
         val updatedIds = mutableListOf<String>()
         DatabaseFactory.query {
             taskAssignments.forEach { taskAssignmentDto ->
                 val uuid = uuidConverter.toStorage(taskAssignmentDto.id)
+                val requesterMemberIdUuid = uuidConverter.toStorage(requesterMemberId)
                 val result = TaskAssignments.update({ TaskAssignments.id.eq(uuid) }) {
                     it[statusDate] = instantConverter.toStorage(taskAssignmentDto.progressStatusDate)
                     it[statusType] = taskAssignmentDto.progressStatus
+                    it[statusByMember] = requesterMemberIdUuid
                 }
                 if (result == 1) { // Indicates row updated
                     updatedIds.add(taskAssignmentDto.id)
@@ -112,6 +113,7 @@ class LocalTaskAssignmentsRepository(
                 }) {
                     it[statusDate] = instantConverter.toStorage(taskAssignmentDto.progressStatusDate)
                     it[statusType] = taskAssignmentDto.progressStatus
+                    it[statusByMember] = requesterMemberIdUuid
                 }
                 if (result == 1) { // Indicates row updated
                     updatedIds.add(taskAssignmentDto.id)
@@ -121,17 +123,23 @@ class LocalTaskAssignmentsRepository(
         return updatedIds
     }
 
-    override suspend fun editForHouse(taskAssignments: List<TaskAssignmentDto>, houseIds: List<String>): List<String> {
+    override suspend fun editForHouse(
+        taskAssignments: List<TaskAssignmentDto>,
+        houseIds: List<String>,
+        requesterMemberId: String
+    ): List<String> {
         val taskIdUuids = tasksRepository.getForHouses(houseIds).map { uuidConverter.toStorage(it.id) }
         val updatedIds = mutableListOf<String>()
         DatabaseFactory.query {
             taskAssignments.forEach { taskAssignmentDto ->
                 val uuid = uuidConverter.toStorage(taskAssignmentDto.id)
+                val requesterMemberIdUuid = uuidConverter.toStorage(requesterMemberId)
                 val result = TaskAssignments.update({
                     TaskAssignments.id.eq(uuid).and { TaskAssignments.taskId.inList(taskIdUuids) }
                 }) {
                     it[statusDate] = instantConverter.toStorage(taskAssignmentDto.progressStatusDate)
                     it[statusType] = taskAssignmentDto.progressStatus
+                    it[statusByMember] = requesterMemberIdUuid
                 }
                 if (result == 1) { // Indicates row updated
                     updatedIds.add(taskAssignmentDto.id)
@@ -229,7 +237,23 @@ class LocalTaskAssignmentsRepository(
         val dueDate = localDateTimeConverter.toMain(row[TaskAssignments.dueDate])
         val createdDate = instantConverter.toMain(row[TaskAssignments.createdDate])
         val createType = CreateType.fromKey(row[TaskAssignments.createType])
-        return TaskAssignment(id, progressStatus, statusDate, task, member, dueDate, createdDate, createType)
+        val statusByMember = row[TaskAssignments.statusByMember]
+        val statusByMemberString = if (statusByMember != null) {
+            uuidConverter.toMain(statusByMember)
+        } else {
+            null
+        }
+        return TaskAssignment(
+            id,
+            progressStatus,
+            statusDate,
+            task,
+            member,
+            dueDate,
+            createdDate,
+            createType,
+            statusByMemberString
+        )
     }
 
     private fun rowToMemberId(row: ResultRow): String {

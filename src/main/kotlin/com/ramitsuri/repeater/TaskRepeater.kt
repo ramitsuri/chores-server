@@ -132,7 +132,8 @@ class TaskRepeater(
             member = member,
             createdDate = runDateTime.toInstant(),
             createType = CreateType.AUTO,
-            dueDateTime = task.dueDateTime
+            dueDateTime = task.dueDateTime,
+            statusByMember = null
         )
     }
 
@@ -182,7 +183,8 @@ class TaskRepeater(
             member = newAssignmentMember,
             createdDate = runDateTime.toInstant(),
             createType = CreateType.AUTO,
-            dueDateTime = dueDateTime
+            dueDateTime = dueDateTime,
+            statusByMember = null
         )
     }
 

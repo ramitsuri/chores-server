@@ -95,7 +95,8 @@ data class TaskAssignment(
     @Serializable(with = InstantSerializer::class)
     val createdDate: Instant,
     @Serializable(with = CreateTypeSerializer::class)
-    val createType: CreateType
+    val createType: CreateType,
+    val statusByMember: String?
 )
 
 @Serializable

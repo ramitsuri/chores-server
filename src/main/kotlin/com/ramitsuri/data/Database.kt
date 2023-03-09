@@ -94,6 +94,7 @@ object TaskAssignments : UUIDTable() {
     val dueDate: Column<String> = varchar("dueDate", 50)
     val createdDate: Column<String> = varchar("createdDate", 50)
     val createType: Column<Int> = integer("createType")
+    val statusByMember: Column<UUID?> = uuid("statusByMember").nullable().default(null)
 }
 
 object RunTimeLogs : IntIdTable() {
