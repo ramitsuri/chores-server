@@ -39,26 +39,6 @@ class HousesRepositoryTest: BaseRepositoryTest() {
     }
 
     @Test
-    fun testDeleteAll_ofHousesExist_shouldDelete() {
-        runBlocking {
-            add("House1")
-            add("House2")
-            var houses = repository.get()
-            assertFalse(houses.isEmpty())
-            repository.delete()
-            houses = repository.get()
-            assertTrue(houses.isEmpty())
-        }
-    }
-
-    @Test
-    fun testDeleteAll_ifHousesDoNotExist_shouldDoNothing() {
-        runBlocking {
-            repository.delete()
-        }
-    }
-
-    @Test
     fun testEdit() {
         runBlocking {
             add("House1")

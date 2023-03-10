@@ -51,13 +51,13 @@ class TestTasksRepository(
         return size
     }
 
-    override suspend fun delete(id: String): Int {
+    override suspend fun delete(id: String): Boolean {
         val toDelete = storage[id]
         return toDelete?.let {
             storage.remove(id)
-            1
+            true
         } ?: run {
-            0
+            false
         }
     }
 
@@ -70,7 +70,7 @@ class TestTasksRepository(
         repeatUnit: RepeatUnit,
         rotateMember: Boolean,
         status: ActiveStatus
-    ): Int {
+    ): Boolean {
         val toEdit = storage[id]
         return toEdit?.let {
 
@@ -85,9 +85,9 @@ class TestTasksRepository(
                     status = status
                 )
             storage[id] = new
-            1
+            true
         } ?: run {
-            0
+            false
         }
     }
 
