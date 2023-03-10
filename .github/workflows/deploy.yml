@@ -25,6 +25,7 @@ jobs:
           echo "  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}" >> src/main/appengine/app.yaml
           echo "  JWT_SECRET: ${{ secrets.JWT_SECRET }}" >> src/main/appengine/app.yaml
           echo "  JWT_ISSUER: ${{ secrets.JWT_ISSUER }}" >> src/main/appengine/app.yaml
+          echo "  ADD_DUMMY_DATA: ${{ secrets.ADD_DUMMY_DATA }}" >> src/main/appengine/app.yaml
 
       - name: Check environment vars
         run: >

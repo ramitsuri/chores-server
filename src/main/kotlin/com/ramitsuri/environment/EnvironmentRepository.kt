@@ -23,4 +23,7 @@ class EnvironmentRepository {
     fun getJwtSecret() = System.getenv("JWT_SECRET") ?: properties.getProperty("JWT_SECRET") ?: "jwt_secret"
 
     fun getJwtIssuer() = System.getenv("JWT_ISSUER") ?: properties.getProperty("JWT_ISSUER") ?: "jwt_issuer"
+
+    fun addDummyData(): Boolean =
+        System.getenv("ADD_DUMMY_DATA")?.toBoolean() ?: properties.getProperty("ADD_DUMMY_DATA")?.toBoolean() ?: false
 }

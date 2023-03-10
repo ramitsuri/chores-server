@@ -15,11 +15,9 @@ import com.ramitsuri.repeater.RepeatScheduler
 import com.ramitsuri.repeater.TaskRepeater
 import com.ramitsuri.repository.access.SyncAccessController
 import com.ramitsuri.repository.access.TaskAssignmentAccessController
-import com.ramitsuri.repository.interfaces.TasksTaskAssignmentsRepository
 import com.ramitsuri.repository.local.*
 import com.ramitsuri.routes.*
-import com.ramitsuri.utils.DummyRepository
-import io.ktor.server.engine.*
+import com.ramitsuri.utils.DummyDataProvider
 import io.ktor.server.netty.*
 import kotlinx.coroutines.Dispatchers
 import java.time.ZoneId
@@ -56,13 +54,6 @@ class AppContainer {
     private val syncRepository = LocalSyncRepository(memberAssignmentsRepository, housesRepository)
     private val syncAccessController = SyncAccessController(syncRepository, membersRepository)
     private val pushMessageTokenRepository = LocalPushMessageTokenRepository(uuidConverter)
-    private val dummyRepository = DummyRepository(
-        membersRepository,
-        housesRepository,
-        tasksRepository,
-        memberAssignmentsRepository,
-        taskAssignmentsRepository
-    )
 
     private val eventService: EventService = GuavaEventService()
 
@@ -72,6 +63,8 @@ class AppContainer {
         Constants.TOKEN_EXPIRATION,
         environment.getJwtSecret()
     )
+
+    val dummyDataProvider = DummyDataProvider()
 
     fun getJwtService() = jwtService
 
@@ -111,7 +104,6 @@ class AppContainer {
         return RepeatScheduler(config, repeater, LocalRunTimeLogsRepository(instantConverter))
     }
 
-    @OptIn(EngineAPI::class)
     fun getApplicationEngine(): Netty {
         return Netty
     }

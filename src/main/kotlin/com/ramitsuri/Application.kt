@@ -19,6 +19,9 @@ fun main() {
         environment.getDbUsername(),
         environment.getDbPassword()
     )
+    if (environment.addDummyData()) {
+        appContainer.dummyDataProvider.setup()
+    }
     CoroutineScope(Dispatchers.Default).launch {
         appContainer.getTaskScheduler().schedule()
     }
@@ -37,7 +40,7 @@ fun main() {
     }.start(wait = true)
 }
 
-private fun Application.logRoutes(){
+private fun Application.logRoutes() {
     val root = feature(Routing)
     val allRoutes = allRoutes(root)
     val allRoutesWithMethod = allRoutes.filter { it.selector is HttpMethodRouteSelector }
