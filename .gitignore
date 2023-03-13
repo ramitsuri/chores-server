@@ -143,3 +143,6 @@ build/
 /src/main/resources/env.properties
 
 .DS_Store
+
+# Firebase Service Account json
+google.json

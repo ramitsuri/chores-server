@@ -51,6 +51,9 @@ dependencies {
     // Hash
     implementation "com.ToxicBakery.library.bcrypt:bcrypt:1.0.9"
 
+    // Firebase
+    implementation 'com.google.firebase:firebase-admin:9.1.1'
+
     // Testing
     testImplementation("io.ktor:ktor-server-tests:$ktorVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")

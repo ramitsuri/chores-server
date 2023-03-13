@@ -11,14 +11,32 @@ import com.ramitsuri.events.GuavaEventService
 import com.ramitsuri.models.RepeatSchedulerConfig
 import com.ramitsuri.models.SchedulerRepeatType
 import com.ramitsuri.plugins.JwtService
+import com.ramitsuri.pushmessage.FirebasePushMessageService
+import com.ramitsuri.pushmessage.PushMessageService
 import com.ramitsuri.repeater.RepeatScheduler
 import com.ramitsuri.repeater.TaskRepeater
 import com.ramitsuri.repository.access.SyncAccessController
 import com.ramitsuri.repository.access.TaskAssignmentAccessController
-import com.ramitsuri.repository.local.*
-import com.ramitsuri.routes.*
+import com.ramitsuri.repository.local.LocalHousesRepository
+import com.ramitsuri.repository.local.LocalMemberAssignmentsRepository
+import com.ramitsuri.repository.local.LocalMembersRepository
+import com.ramitsuri.repository.local.LocalPushMessageTokenRepository
+import com.ramitsuri.repository.local.LocalRunTimeLogsRepository
+import com.ramitsuri.repository.local.LocalSyncRepository
+import com.ramitsuri.repository.local.LocalTaskAssignmentsRepository
+import com.ramitsuri.repository.local.LocalTasksRepository
+import com.ramitsuri.repository.local.LocalTasksTaskAssignmentsRepository
+import com.ramitsuri.routes.HouseRoutes
+import com.ramitsuri.routes.LoginRoutes
+import com.ramitsuri.routes.MemberAssignmentRoutes
+import com.ramitsuri.routes.MemberRoutes
+import com.ramitsuri.routes.PushMessageTokenRoute
+import com.ramitsuri.routes.Routes
+import com.ramitsuri.routes.SyncRoutes
+import com.ramitsuri.routes.TaskAssignmentRoutes
+import com.ramitsuri.routes.TaskRoutes
 import com.ramitsuri.utils.DummyDataProvider
-import io.ktor.server.netty.*
+import io.ktor.server.netty.Netty
 import kotlinx.coroutines.Dispatchers
 import java.time.ZoneId
 
@@ -65,6 +83,8 @@ class AppContainer {
     )
 
     val dummyDataProvider = DummyDataProvider()
+
+    val pushMessagingService: PushMessageService = FirebasePushMessageService()
 
     fun getJwtService() = jwtService
 
