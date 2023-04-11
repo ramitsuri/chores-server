@@ -8,6 +8,7 @@ import com.ramitsuri.repository.interfaces.RunTimeLogsRepository
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.ZonedDateTime
+import java.util.concurrent.atomic.AtomicBoolean
 
 class RepeatScheduler(
     private val config: RepeatSchedulerConfig,
@@ -16,8 +17,14 @@ class RepeatScheduler(
 ) : Loggable {
     override val log = logger()
 
+    private val running = AtomicBoolean(false)
+
     suspend fun schedule() {
         log.info("Scheduling TaskRepeater with RepeatType: ${config.repeatType}}")
+        if (!running.compareAndSet(false, true)) {
+            log.info("Already running, exiting")
+            return
+        }
         while (true) {
             val now = ZonedDateTime.now(config.zoneId)
             val lastRunTime =
