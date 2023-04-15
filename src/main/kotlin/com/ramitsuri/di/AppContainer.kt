@@ -84,7 +84,7 @@ class AppContainer {
 
     val dummyDataProvider = DummyDataProvider()
 
-    val pushMessagingService: PushMessageService = FirebasePushMessageService()
+    //val pushMessagingService: PushMessageService = FirebasePushMessageService()
 
     fun getJwtService() = jwtService
 
