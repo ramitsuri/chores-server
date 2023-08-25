@@ -1,5 +1,5 @@
 runtime: java11
-entrypoint: 'java -jar choresserver-0.0.20-all.jar'
+entrypoint: 'java -jar choresserver-0.0.21-all.jar'
 automatic_scaling:
   min_instances: 1
   max_instances: 1
