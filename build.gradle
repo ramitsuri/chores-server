@@ -1,7 +1,7 @@
 plugins {
     id "application"
     id "org.jetbrains.kotlin.jvm" version "$kotlinVersion"
-    id "org.jetbrains.kotlin.plugin.serialization" version "1.5.21"
+    id "org.jetbrains.kotlin.plugin.serialization" version "$kotlinVersion"
     id "com.github.johnrengelman.shadow" version "7.0.0"
     id "com.google.cloud.tools.appengine" version "2.4.2"
 }
@@ -26,18 +26,19 @@ appengine {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-auth-jwt:$ktorVersion")
-    implementation("io.ktor:ktor-auth:$ktorVersion")
+    implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
+    implementation("io.ktor:ktor-server-auth:$ktorVersion")
     implementation("io.ktor:ktor-server-core:$ktorVersion")
-    implementation("io.ktor:ktor-locations:$ktorVersion")
-    implementation("io.ktor:ktor-gson:$ktorVersion")
+    implementation("io.ktor:ktor-server-locations:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-gson:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
-    implementation("io.ktor:ktor-serialization:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
-    implementation('org.xerial:sqlite-jdbc:3.36.0.2')
-    implementation('org.postgresql:postgresql:42.3.1')
+    implementation('org.xerial:sqlite-jdbc:3.42.0.0')
+    implementation('org.postgresql:postgresql:42.6.0')
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
 
     // Event bus
@@ -67,9 +68,9 @@ test {
 }
 
 compileKotlin {
-    kotlinOptions.jvmTarget = '1.8'
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11
 }
 
 compileTestKotlin {
-    kotlinOptions.jvmTarget = '1.8'
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11
 }

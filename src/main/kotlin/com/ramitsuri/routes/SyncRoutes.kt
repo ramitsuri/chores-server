@@ -3,11 +3,11 @@ package com.ramitsuri.routes
 import com.ramitsuri.models.AccessResult
 import com.ramitsuri.plugins.getMemberId
 import com.ramitsuri.repository.access.SyncAccessController
-import io.ktor.application.call
+import io.ktor.server.application.call
 import io.ktor.http.HttpStatusCode
-import io.ktor.response.respond
-import io.ktor.routing.Route
-import io.ktor.routing.get
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
 
 class SyncRoutes(private val syncAccessController: SyncAccessController) : Routes() {
     override val path = "/sync"

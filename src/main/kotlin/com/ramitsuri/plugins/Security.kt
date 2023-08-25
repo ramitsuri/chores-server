@@ -8,11 +8,11 @@ import com.ramitsuri.models.Error
 import com.ramitsuri.models.ErrorCode
 import com.ramitsuri.models.Member
 import com.ramitsuri.repository.interfaces.MembersRepository
-import io.ktor.application.*
-import io.ktor.auth.*
-import io.ktor.auth.jwt.*
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.http.*
-import io.ktor.response.*
+import io.ktor.server.response.*
 import io.ktor.util.pipeline.*
 import kotlinx.serialization.Serializable
 import java.time.Duration

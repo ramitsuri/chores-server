@@ -8,6 +8,7 @@ import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.ProgressStatus
 import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.repository.interfaces.TasksTaskAssignmentsRepository
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.update

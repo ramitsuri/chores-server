@@ -3,8 +3,8 @@ package com.ramitsuri
 import com.ramitsuri.di.AppContainer
 import com.ramitsuri.plugins.configureSecurity
 import com.ramitsuri.plugins.configureSerialization
-import io.ktor.application.*
-import io.ktor.routing.*
+import io.ktor.server.application.*
+import io.ktor.server.routing.*
 import io.ktor.server.engine.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +41,7 @@ fun main() {
 }
 
 private fun Application.logRoutes() {
-    val root = feature(Routing)
+    val root = plugin(Routing)
     val allRoutes = allRoutes(root)
     val allRoutesWithMethod = allRoutes.filter { it.selector is HttpMethodRouteSelector }
     allRoutesWithMethod.forEach {

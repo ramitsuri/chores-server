@@ -6,10 +6,16 @@ import com.ramitsuri.data.Houses
 import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.House
 import com.ramitsuri.repository.interfaces.HousesRepository
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.InsertStatement
+import org.jetbrains.exposed.sql.update
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 class LocalHousesRepository(
     private val uuidConverter: Converter<String, UUID>,

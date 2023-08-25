@@ -6,6 +6,7 @@ import com.ramitsuri.data.PushMessageTokens
 import com.ramitsuri.models.PushMessageToken
 import com.ramitsuri.repository.interfaces.PushMessageTokenRepository
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert

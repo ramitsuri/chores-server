@@ -3,13 +3,13 @@ package com.ramitsuri.routes
 import com.ramitsuri.models.PushMessageTokenDto
 import com.ramitsuri.plugins.getMemberId
 import com.ramitsuri.repository.interfaces.PushMessageTokenRepository
-import io.ktor.application.call
+import io.ktor.server.application.call
 import io.ktor.http.HttpStatusCode
-import io.ktor.request.receive
-import io.ktor.response.respond
-import io.ktor.routing.Route
-import io.ktor.routing.get
-import io.ktor.routing.put
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.put
 
 class PushMessageTokenRoute(private val repository: PushMessageTokenRepository) : Routes() {
     override val path: String = "/push-token"

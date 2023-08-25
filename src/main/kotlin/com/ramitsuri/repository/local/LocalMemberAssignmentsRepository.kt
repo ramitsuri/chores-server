@@ -8,9 +8,14 @@ import com.ramitsuri.models.MemberAssignment
 import com.ramitsuri.repository.interfaces.HousesRepository
 import com.ramitsuri.repository.interfaces.MemberAssignmentsRepository
 import com.ramitsuri.repository.interfaces.MembersRepository
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.InsertStatement
-import java.util.*
+import java.util.UUID
 
 class LocalMemberAssignmentsRepository(
     private val membersRepository: MembersRepository,

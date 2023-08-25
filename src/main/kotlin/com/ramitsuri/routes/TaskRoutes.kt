@@ -9,15 +9,15 @@ import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.models.TaskDto
 import com.ramitsuri.repository.interfaces.TasksRepository
 import com.ramitsuri.repository.interfaces.TasksTaskAssignmentsRepository
-import io.ktor.application.call
+import io.ktor.server.application.call
 import io.ktor.http.HttpStatusCode
-import io.ktor.request.receive
-import io.ktor.response.respond
-import io.ktor.routing.Route
-import io.ktor.routing.delete
-import io.ktor.routing.get
-import io.ktor.routing.post
-import io.ktor.routing.put
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.put
 import java.time.Instant
 
 class TaskRoutes(

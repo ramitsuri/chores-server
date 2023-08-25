@@ -3,10 +3,10 @@ package com.ramitsuri.routes
 import com.ramitsuri.Constants
 import com.ramitsuri.models.Error
 import com.ramitsuri.models.ErrorCode
-import io.ktor.application.*
-import io.ktor.auth.*
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.http.*
-import io.ktor.routing.*
+import io.ktor.server.routing.*
 
 abstract class Routes(private val authenticationConfig: String? = Constants.JWT_AUTH_CONFIG_BASE) {
     fun register(application: Application) {
