@@ -64,6 +64,11 @@ class TaskRoutes(
                 if (taskDto.dueDateTime != null) localDateTimeConverter.toMain(taskDto.dueDateTime) else null
             val repeatValue = taskDto.repeatValue ?: 0
             val repeatUnit = RepeatUnit.fromKey(taskDto.repeatUnit ?: RepeatUnit.NONE.key)
+            val repeatEndDateTime = if (taskDto.repeatEndDateTime != null) {
+                localDateTimeConverter.toMain(taskDto.repeatEndDateTime)
+            } else {
+                null
+            }
             val houseId = taskDto.houseId
             val memberId = taskDto.memberId
             val rotateMember = taskDto.rotateMember ?: false
@@ -75,6 +80,7 @@ class TaskRoutes(
                         dueDateTime,
                         repeatValue,
                         repeatUnit,
+                        repeatEndDateTime,
                         houseId,
                         memberId,
                         rotateMember,
@@ -153,6 +159,12 @@ class TaskRoutes(
             } else {
                 existingTask.repeatValue
             }
+            val repeatEndDateTime = if (taskDto.repeatEndDateTime != null) {
+                shouldDeleteTaskAssignments = true
+                localDateTimeConverter.toMain(taskDto.repeatEndDateTime)
+            } else {
+                existingTask.repeatEndDateTime
+            }
 
             val rotateMember = if (taskDto.rotateMember != null) {
                 shouldDeleteTaskAssignments = true
@@ -176,11 +188,22 @@ class TaskRoutes(
                     dueDateTime,
                     repeatValue,
                     repeatUnit,
+                    repeatEndDateTime,
                     rotateMember,
                     status
                 )
             } else {
-                tasksRepository.edit(id, name, description, dueDateTime, repeatValue, repeatUnit, rotateMember, status)
+                tasksRepository.edit(
+                    id,
+                    name,
+                    description,
+                    dueDateTime,
+                    repeatValue,
+                    repeatUnit,
+                    repeatEndDateTime,
+                    rotateMember,
+                    status
+                )
             }
 
             if (result) {

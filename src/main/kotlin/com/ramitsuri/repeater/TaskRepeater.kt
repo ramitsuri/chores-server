@@ -118,11 +118,15 @@ class TaskRepeater(
         member: Member,
         house: House,
         runDateTime: ZonedDateTime
-    ): TaskAssignment {
+    ): TaskAssignment? {
         val progressStatus = if (house.status == ActiveStatus.PAUSED) {
             ProgressStatus.WONT_DO
         } else {
             ProgressStatus.TODO
+        }
+        val dueDateTime = task.dueDateTime
+        if (task.repeatEndDateTime != null && dueDateTime.isAfter(task.repeatEndDateTime)) {
+            return null
         }
         return TaskAssignment(
             id = "",
@@ -132,7 +136,7 @@ class TaskRepeater(
             member = member,
             createdDate = runDateTime.toInstant(),
             createType = CreateType.AUTO,
-            dueDateTime = task.dueDateTime,
+            dueDateTime = dueDateTime,
             statusByMember = null
         )
     }
@@ -245,6 +249,9 @@ class TaskRepeater(
         runDateTime: ZonedDateTime,
         timeZone: ZoneId
     ): Boolean {
+        if (task.repeatEndDateTime != null && newAssignmentDueDateTime.isAfter(task.repeatEndDateTime)) {
+            return false
+        }
         // New assignment for a task can only be created if
         // - it's of repeat type OnComplete and its most recent assignment was complete
         // - it's regular repeating type and new due date time is before run date time (now)

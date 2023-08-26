@@ -59,6 +59,8 @@ data class Task(
     val repeatValue: Int,
     @Serializable(with = RepeatUnitSerializer::class)
     val repeatUnit: RepeatUnit,
+    @Serializable(with = LocalDateTimeSerializer::class)
+    val repeatEndDateTime: LocalDateTime?,
     val houseId: String,
     val memberId: String,
     val rotateMember: Boolean,
@@ -75,6 +77,7 @@ data class TaskDto(
     val dueDateTime: String?,
     val repeatValue: Int?,
     val repeatUnit: Int?,
+    val repeatEndDateTime: String?,
     val houseId: String?,
     val memberId: String?,
     val rotateMember: Boolean?,

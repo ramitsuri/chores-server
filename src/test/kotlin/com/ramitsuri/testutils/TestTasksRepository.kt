@@ -19,6 +19,7 @@ class TestTasksRepository(
         dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
+        repeatEndDate: LocalDateTime?,
         houseId: String,
         memberId: String,
         rotateMember: Boolean,
@@ -35,6 +36,7 @@ class TestTasksRepository(
                 dueDate,
                 repeatValue,
                 repeatUnit,
+                repeatEndDate,
                 houseId,
                 memberId,
                 rotateMember,
@@ -68,6 +70,7 @@ class TestTasksRepository(
         dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
+        repeatEndDate: LocalDateTime?,
         rotateMember: Boolean,
         status: ActiveStatus
     ): Boolean {
@@ -81,6 +84,7 @@ class TestTasksRepository(
                     dueDateTime = dueDate,
                     repeatValue = repeatValue,
                     repeatUnit = repeatUnit,
+                    repeatEndDateTime = repeatEndDate,
                     rotateMember = rotateMember,
                     status = status
                 )

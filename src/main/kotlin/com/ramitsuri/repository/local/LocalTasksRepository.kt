@@ -35,6 +35,7 @@ class LocalTasksRepository(
         dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
+        repeatEndDate: LocalDateTime?,
         houseId: String,
         memberId: String,
         rotateMember: Boolean,
@@ -53,6 +54,11 @@ class LocalTasksRepository(
                 task[Tasks.dueDate] = localDateTimeConverter.toStorage(dueDate)
                 task[Tasks.repeatValue] = repeatValue
                 task[Tasks.repeatUnit] = repeatUnit.key
+                task[Tasks.repeatEndDate] = if (repeatEndDate == null) {
+                    null
+                } else {
+                    localDateTimeConverter.toStorage(repeatEndDate)
+                }
                 task[Tasks.houseId] = uuidConverter.toStorage(houseId)
                 task[Tasks.memberId] = uuidConverter.toStorage(memberId)
                 task[Tasks.rotateMember] = rotateMember
@@ -88,6 +94,7 @@ class LocalTasksRepository(
         dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
+        repeatEndDate: LocalDateTime?,
         rotateMember: Boolean,
         status: ActiveStatus
     ): Boolean {
@@ -99,6 +106,11 @@ class LocalTasksRepository(
                 task[Tasks.dueDate] = localDateTimeConverter.toStorage(dueDate)
                 task[Tasks.repeatValue] = repeatValue
                 task[Tasks.repeatUnit] = repeatUnit.key
+                task[Tasks.repeatEndDate] = if (repeatEndDate == null) {
+                    null
+                } else {
+                    localDateTimeConverter.toStorage(repeatEndDate)
+                }
                 task[Tasks.rotateMember] = rotateMember
                 task[Tasks.activeStatus] = status.key
             } > 0
@@ -140,21 +152,28 @@ class LocalTasksRepository(
         val dueDate = localDateTimeConverter.toMain(row[Tasks.dueDate])
         val repeatValue = row[Tasks.repeatValue]
         val repeatUnit = RepeatUnit.fromKey(row[Tasks.repeatUnit])
+        val repeatEndDateColumnValue = row[Tasks.repeatEndDate]
+        val repeatEndDate: LocalDateTime? = if (repeatEndDateColumnValue == null) {
+            null
+        } else {
+            localDateTimeConverter.toMain(repeatEndDateColumnValue)
+        }
         val createdDate = instantConverter.toMain(row[Tasks.createdDate])
         val rotateMember = row[Tasks.rotateMember]
         val status = ActiveStatus.fromKey(row[Tasks.activeStatus])
         return Task(
-            id.toString(),
-            name,
-            description,
-            dueDate,
-            repeatValue,
-            repeatUnit,
-            houseId.toString(),
-            memberId.toString(),
-            rotateMember,
-            createdDate,
-            status
+            id = id.toString(),
+            name = name,
+            description = description,
+            dueDateTime = dueDate,
+            repeatValue = repeatValue,
+            repeatUnit = repeatUnit,
+            repeatEndDateTime = repeatEndDate,
+            houseId = houseId.toString(),
+            memberId = memberId.toString(),
+            rotateMember = rotateMember,
+            createdDate = createdDate,
+            status = status
         )
     }
 }

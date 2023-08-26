@@ -88,6 +88,7 @@ object Tasks : UUIDTable() {
     val dueDate: Column<String> = varchar("dueDate", 50)
     val repeatValue: Column<Int> = integer("repeatValue")
     val repeatUnit: Column<Int> = integer("repeatUnit")
+    val repeatEndDate: Column<String?> = varchar("repeatEndDate", 50).nullable().default(null)
     val houseId: Column<UUID> = uuid("houseId").references(Houses.id)
     val memberId: Column<UUID> = uuid("memberId").references(Members.id)
     val rotateMember: Column<Boolean> = bool("rotateMember")
@@ -110,7 +111,7 @@ object RunTimeLogs : IntIdTable() {
     val runTime: Column<String> = varchar("runDate", 50)
 }
 
-object PushMessageTokens: IntIdTable(){
+object PushMessageTokens : IntIdTable() {
     val memberId: Column<UUID> = uuid("memberId").references(Members.id)
     val deviceId: Column<UUID> = uuid("deviceId")
     val token: Column<String> = text("token")

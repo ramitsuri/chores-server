@@ -13,6 +13,7 @@ interface TasksRepository {
         dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
+        repeatEndDate: LocalDateTime?,
         houseId: String,
         memberId: String,
         rotateMember: Boolean,
@@ -31,6 +32,7 @@ interface TasksRepository {
         dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
+        repeatEndDate: LocalDateTime?,
         rotateMember: Boolean,
         status: ActiveStatus
     ): Boolean

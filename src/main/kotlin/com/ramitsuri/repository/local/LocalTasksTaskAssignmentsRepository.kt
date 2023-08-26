@@ -26,6 +26,7 @@ class LocalTasksTaskAssignmentsRepository(
         dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
+        repeatEndDate: LocalDateTime?,
         rotateMember: Boolean,
         status: ActiveStatus
     ): Boolean {
@@ -37,6 +38,11 @@ class LocalTasksTaskAssignmentsRepository(
                 task[Tasks.dueDate] = localDateTimeConverter.toStorage(dueDate)
                 task[Tasks.repeatValue] = repeatValue
                 task[Tasks.repeatUnit] = repeatUnit.key
+                task[Tasks.repeatEndDate] = if (repeatEndDate == null) {
+                    null
+                } else {
+                    localDateTimeConverter.toStorage(repeatEndDate)
+                }
                 task[Tasks.rotateMember] = rotateMember
                 task[activeStatus] = status.key
             } > 0

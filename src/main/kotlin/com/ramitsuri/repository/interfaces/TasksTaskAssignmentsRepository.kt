@@ -12,6 +12,7 @@ interface TasksTaskAssignmentsRepository {
         dueDate: LocalDateTime,
         repeatValue: Int,
         repeatUnit: RepeatUnit,
+        repeatEndDate: LocalDateTime?,
         rotateMember: Boolean,
         status: ActiveStatus
     ): Boolean
