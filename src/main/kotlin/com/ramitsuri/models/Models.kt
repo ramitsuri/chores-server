@@ -134,7 +134,8 @@ data class Token(val authToken: String)
 
 @Serializable
 data class SyncResult(
-    val associatedLists: List<House>
+    val associatedLists: List<House>,
+    val memberListAssociations: List<MemberAssignment>
 )
 
 data class RepeatSchedulerConfig(

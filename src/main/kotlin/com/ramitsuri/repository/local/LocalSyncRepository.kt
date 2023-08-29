@@ -21,19 +21,19 @@ class LocalSyncRepository(
                 }
             }
         }
-        return SyncResult(associatedLists = associatedLists.toList())
+        return SyncResult(associatedLists = associatedLists.toList(), memberListAssociations = memberAssignments)
     }
 
     override suspend fun get(): SyncResult {
         val associatedLists = mutableSetOf<House>()
         val memberAssignments = memberAssignmentsRepository.get()
         memberAssignments.forEach { memberAssignment ->
-            housesRepository.get(memberAssignment.houseId)?.let {  house ->
+            housesRepository.get(memberAssignment.houseId)?.let { house ->
                 if (house.status == ActiveStatus.ACTIVE || house.status == ActiveStatus.PAUSED) {
                     associatedLists.add(house)
                 }
             }
         }
-        return SyncResult(associatedLists = associatedLists.toList())
+        return SyncResult(associatedLists = associatedLists.toList(), memberListAssociations = memberAssignments)
     }
 }
