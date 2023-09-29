@@ -23,8 +23,6 @@ interface TasksRepository {
 
     suspend fun delete(): Int
 
-    suspend fun delete(id: String): Boolean
-
     suspend fun edit(
         id: String,
         name: String,
@@ -42,4 +40,6 @@ interface TasksRepository {
     suspend fun getForHouses(houseIds: List<String>): List<Task>
 
     suspend fun get(id: String): Task?
+
+    suspend fun get(ids: List<String>): List<Task>
 }

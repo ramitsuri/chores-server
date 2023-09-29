@@ -114,7 +114,9 @@ data class TaskAssignmentDto(
 data class PushMessageToken(
     val memberId: String,
     val deviceId: String,
-    val token: String
+    val token: String,
+    @Serializable(with = InstantSerializer::class)
+    val uploadDateTime: Instant,
 )
 
 @Serializable
@@ -148,5 +150,5 @@ data class LoginParam(val id: String?, val key: String?)
 
 sealed class AccessResult<out T> {
     data class Success<T>(val data: T) : AccessResult<T>()
-    object Failure : AccessResult<Nothing>()
+    data object Failure : AccessResult<Nothing>()
 }

@@ -3,6 +3,8 @@ package com.ramitsuri.repository.local
 import com.ramitsuri.data.Converter
 import com.ramitsuri.data.DatabaseFactory.query
 import com.ramitsuri.data.Tasks
+import com.ramitsuri.events.Event
+import com.ramitsuri.events.EventService
 import com.ramitsuri.extensions.Loggable
 import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.RepeatUnit
@@ -10,9 +12,7 @@ import com.ramitsuri.models.Task
 import com.ramitsuri.repository.interfaces.HousesRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
 import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
@@ -26,7 +26,8 @@ class LocalTasksRepository(
     private val housesRepository: HousesRepository,
     private val instantConverter: Converter<Instant, String>,
     private val localDateTimeConverter: Converter<LocalDateTime, String>,
-    private val uuidConverter: Converter<String, UUID>
+    private val uuidConverter: Converter<String, UUID>,
+    private val eventService: EventService
 ) : TasksRepository, Loggable {
     override val log = logger()
     override suspend fun add(
@@ -74,16 +75,10 @@ class LocalTasksRepository(
         }
     }
 
+    // Internal only
     override suspend fun delete(): Int {
         return query {
             Tasks.deleteAll()
-        }
-    }
-
-    override suspend fun delete(id: String): Boolean {
-        return query {
-            val uuid = uuidConverter.toStorage(id)
-            Tasks.deleteWhere { Tasks.id.eq(uuid) } > 0
         }
     }
 
@@ -98,7 +93,7 @@ class LocalTasksRepository(
         rotateMember: Boolean,
         status: ActiveStatus
     ): Boolean {
-        return query {
+        val edited = query {
             val uuid = uuidConverter.toStorage(id)
             Tasks.update({ Tasks.id.eq(uuid) }) { task ->
                 task[Tasks.name] = name
@@ -115,6 +110,10 @@ class LocalTasksRepository(
                 task[Tasks.activeStatus] = status.key
             } > 0
         }
+        if (edited) {
+            eventService.post(Event.TaskEdited(taskId = id))
+        }
+        return edited
     }
 
     override suspend fun get(): List<Task> {
@@ -140,6 +139,17 @@ class LocalTasksRepository(
             Tasks.select { Tasks.id.eq(uuid) }.map {
                 rowToTask(it)
             }.singleOrNull()
+        }
+    }
+
+    override suspend fun get(ids: List<String>): List<Task> {
+        val taskUuids = ids.map { uuidConverter.toStorage(it) }
+        return query {
+            Tasks.select { Tasks.id.inList(taskUuids) }
+                .filterNotNull()
+                .map {
+                    rowToTask(it)
+                }
         }
     }
 

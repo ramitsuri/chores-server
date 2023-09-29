@@ -1,7 +1,5 @@
 package com.ramitsuri.repeater
 
-import com.ramitsuri.events.Event
-import com.ramitsuri.events.EventService
 import com.ramitsuri.extensions.Loggable
 import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.CreateType
@@ -14,6 +12,7 @@ import com.ramitsuri.models.TaskAssignment
 import com.ramitsuri.repository.interfaces.HousesRepository
 import com.ramitsuri.repository.interfaces.MemberAssignmentsRepository
 import com.ramitsuri.repository.interfaces.MembersRepository
+import com.ramitsuri.repository.interfaces.TaskAssignmentInsert
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -24,7 +23,6 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class TaskRepeater(
-    private val eventService: EventService,
     private val tasksRepository: TasksRepository,
     private val membersRepository: MembersRepository,
     private val housesRepository: HousesRepository,
@@ -47,20 +45,7 @@ class TaskRepeater(
             zoneId
         )
         log.info("Adding ${newAssignments.size} new assignments")
-        for (newAssignment in newAssignments) {
-            taskAssignmentsRepository.add(
-                progressStatus = newAssignment.progressStatus,
-                statusDate = newAssignment.progressStatusDate,
-                taskId = newAssignment.task.id,
-                memberId = newAssignment.member.id,
-                createdDate = newAssignment.createdDate,
-                createType = newAssignment.createType,
-                dueDate = newAssignment.dueDateTime
-            )
-        }
-        if (newAssignments.isNotEmpty()) {
-            eventService.post(Event.AssignmentsAdded(newAssignments))
-        }
+        taskAssignmentsRepository.add(newAssignments.map { TaskAssignmentInsert(it) })
     }
 
     /**

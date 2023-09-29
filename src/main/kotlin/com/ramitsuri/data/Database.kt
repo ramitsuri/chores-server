@@ -115,4 +115,5 @@ object PushMessageTokens : IntIdTable() {
     val memberId: Column<UUID> = uuid("memberId").references(Members.id)
     val deviceId: Column<UUID> = uuid("deviceId")
     val token: Column<String> = text("token")
+    val uploadedDateTime: Column<String> = varchar("uploadedDateTime", 50).default("2023-09-13T00:00:00Z")
 }

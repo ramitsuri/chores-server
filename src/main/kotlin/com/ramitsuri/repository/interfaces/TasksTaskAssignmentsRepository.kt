@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 interface TasksTaskAssignmentsRepository {
     suspend fun edit(
-        id: String,
+        taskId: String,
         name: String,
         description: String,
         dueDate: LocalDateTime,
@@ -17,5 +17,5 @@ interface TasksTaskAssignmentsRepository {
         status: ActiveStatus
     ): Boolean
 
-    suspend fun delete(id: String): Boolean
+    suspend fun delete(taskId: String): Boolean
 }

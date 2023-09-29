@@ -15,7 +15,7 @@ open class BaseRepositoryTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(mainThreadSurrogate)
-        DatabaseFactory.init(Constants.DB_URL_TEST, Constants.DB_DRIVER)
+        DatabaseFactory.init(Constants.DB_URL_TEST, Constants.DB_DRIVER_TEST)
     }
 
     @After

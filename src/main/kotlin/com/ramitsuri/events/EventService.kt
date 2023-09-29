@@ -1,8 +1,10 @@
 package com.ramitsuri.events
 
+import kotlinx.coroutines.flow.SharedFlow
+
 interface EventService {
 
-    fun post(event: Event)
-    fun register(eventListener: EventListener)
-    fun unregister(eventListener: EventListener)
+    val events: SharedFlow<Event>
+
+    suspend fun post(event: Event)
 }

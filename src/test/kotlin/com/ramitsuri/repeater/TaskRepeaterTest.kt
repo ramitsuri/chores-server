@@ -1,11 +1,10 @@
 package com.ramitsuri.repeater
 
-import com.ramitsuri.events.Event
 import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.CreateType
 import com.ramitsuri.models.ProgressStatus
 import com.ramitsuri.models.RepeatUnit
-import com.ramitsuri.testutils.TestEventsService
+import com.ramitsuri.repository.interfaces.TaskAssignmentInsert
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -24,14 +23,11 @@ class TaskRepeaterTest : BaseRepeaterTest() {
     private val dispatcher = Dispatchers.Default
     private val baseInstant = Instant.ofEpochMilli(1614618000000) // Mon Mar 01 2021 17:00:00 UTC
     private val baseLocalDateTime = LocalDateTime.ofInstant(baseInstant, zoneId) // Mon Mar 01 2021 17:00:00 UTC
-    private lateinit var eventsService: TestEventsService
 
     @Before
     fun setUp() {
-        eventsService = TestEventsService()
         taskRepeater =
             TaskRepeater(
-                eventsService,
                 tasksRepository,
                 membersRepository,
                 housesRepository,
@@ -683,39 +679,6 @@ class TaskRepeaterTest : BaseRepeaterTest() {
     }
 
     @Test
-    fun testStart_shouldNotifyEventsService_ifNewTasksAdded() {
-        val taskDueDateTime = baseLocalDateTime
-        val runDateTime = ZonedDateTime.ofInstant(baseInstant.plusSeconds(24 * 3600), zoneId)
-        runBlocking {
-            // Arrange
-            addBasic()
-            val member1 = membersRepository.get()[0]
-            addTask(
-                name = "Task1",
-                dueDateTime = taskDueDateTime,
-                repeatValue = 12,
-                RepeatUnit.HOUR,
-                member1.id,
-                rotateMember = true
-            )
-            val task = tasksRepository.get()[0]
-            addAssignment(
-                dueDate = taskDueDateTime,
-                createdDate = baseInstant,
-                taskId = task.id,
-                memberId = member1.id
-            )
-
-            // Act
-            taskRepeater.start(runDateTime, zoneId)
-
-            // Assert
-            assertEquals(1, eventsService.getEvents().size)
-            assertTrue(eventsService.getEvents()[0] is Event.AssignmentsAdded)
-        }
-    }
-
-    @Test
     fun testStart_shouldAddAssignmentsWithSameDueDateTime_ifDSTChanges() {
         val taskDueDateTime = LocalDateTime.parse("2022-09-28T07:00")
         runBlocking {
@@ -798,13 +761,17 @@ class TaskRepeaterTest : BaseRepeaterTest() {
         progressStatus: ProgressStatus = ProgressStatus.TODO
     ) {
         taskAssignmentsRepository.add(
-            progressStatus,
-            Instant.now(),
-            taskId,
-            memberId,
-            dueDate,
-            createdDate,
-            CreateType.AUTO
+            listOf(
+                TaskAssignmentInsert(
+                    progressStatus = progressStatus,
+                    progressStatusDateTime = Instant.now(),
+                    taskId = taskId,
+                    memberId = memberId,
+                    dueDateTime = dueDate,
+                    createdDateTime = createdDate,
+                    createType = CreateType.AUTO
+                )
+            )
         )
     }
 

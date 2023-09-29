@@ -1,10 +1,57 @@
 package com.ramitsuri.pushmessage
 
-interface PushMessageService {
+import com.ramitsuri.events.Event
+import com.ramitsuri.events.EventService
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
-    fun sendData(deviceToken: String, data: Map<String, String>)
+class PushMessageService(
+    private val pushMessageDispatcher: PushMessageDispatcher,
+    private val pushMessagePayloadGenerator: PushMessagePayloadGenerator,
+    coroutineScope: CoroutineScope,
+    ioDispatcher: CoroutineDispatcher,
+    eventService: EventService,
+) {
 
-    fun sendNotification(deviceToken: String, notificationContent: NotificationContent)
+    init {
+        coroutineScope.launch(ioDispatcher) {
+            eventService.events.collect { event ->
+                eventReceived(event)
+            }
+        }
+    }
+
+    private suspend fun eventReceived(event: Event) {
+        when (event) {
+            is Event.AssignmentsAdded -> {
+                forTaskAssignments(event.assignmentIds)
+            }
+
+            is Event.AssignmentsUpdated -> {
+                forTaskAssignments(event.assignmentIds)
+            }
+
+            is Event.TaskEdited -> {
+                forTask(event.taskId)
+            }
+        }
+    }
+
+    private suspend fun forTask(taskId: String) {
+        val pushMessages = pushMessagePayloadGenerator.getForTasks(listOf(taskId))
+        pushMessages.forEach { pushMessage ->
+            val data = pushMessage.payload.toMap()
+            pushMessageDispatcher.sendData(pushMessage.recipientToken, data)
+        }
+    }
+
+    private suspend fun forTaskAssignments(taskAssignmentIds: List<String>) {
+        val pushMessages = pushMessagePayloadGenerator.getForTaskAssignments(taskAssignmentIds)
+        pushMessages.forEach { pushMessage ->
+            val data = pushMessage.payload.toMap()
+            pushMessageDispatcher.sendData(pushMessage.recipientToken, data)
+        }
+    }
+
 }
-
-data class NotificationContent(val title: String, val body: String)

@@ -11,25 +11,34 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
+import java.time.Duration
+import java.time.Instant
 import java.util.UUID
 
 class LocalPushMessageTokenRepository(
-    private val uuidConverter: Converter<String, UUID>
+    private val uuidConverter: Converter<String, UUID>,
+    private val instantConverter: Converter<Instant, String>,
 ) : PushMessageTokenRepository {
 
-    override suspend fun getForMember(memberId: String): List<PushMessageToken> {
+    override suspend fun getOfMembers(memberIds: List<String>, now: Instant): List<PushMessageToken> {
         return DatabaseFactory.query {
-            val memberIdUuid = uuidConverter.toStorage(memberId)
+            val memberIdUuids = memberIds.map { uuidConverter.toStorage(it) }
             PushMessageTokens
-                .select { PushMessageTokens.memberId.eq(memberIdUuid) }
+                .select { PushMessageTokens.memberId.inList(memberIdUuids) }
                 .filterNotNull()
                 .map { row ->
                     rowToPushMessageToken(row)
                 }
+                .filter { Duration.between(it.uploadDateTime, now) < Duration.ofDays(30) }
         }
     }
 
-    override suspend fun addOrReplace(memberId: String, deviceId: String, token: String): PushMessageToken? {
+    override suspend fun addOrReplace(
+        memberId: String,
+        deviceId: String,
+        token: String,
+        addedDateTime: Instant
+    ): PushMessageToken? {
         return DatabaseFactory.query {
             val memberIdUuid = uuidConverter.toStorage(memberId)
             val deviceIdUuid = uuidConverter.toStorage(deviceId)
@@ -53,6 +62,7 @@ class LocalPushMessageTokenRepository(
                 pushMessageToken[PushMessageTokens.memberId] = uuidConverter.toStorage(memberId)
                 pushMessageToken[PushMessageTokens.deviceId] = uuidConverter.toStorage(deviceId)
                 pushMessageToken[PushMessageTokens.token] = token
+                pushMessageToken[PushMessageTokens.uploadedDateTime] = instantConverter.toStorage(addedDateTime)
             }
             statement.resultedValues?.get(0)?.let {
                 rowToPushMessageToken(it)
@@ -64,6 +74,12 @@ class LocalPushMessageTokenRepository(
         val memberId = uuidConverter.toMain(row[PushMessageTokens.memberId])
         val deviceId = uuidConverter.toMain(row[PushMessageTokens.deviceId])
         val token = row[PushMessageTokens.token]
-        return PushMessageToken(memberId = memberId, deviceId = deviceId, token = token)
+        val addedDateTime = instantConverter.toMain(row[PushMessageTokens.uploadedDateTime])
+        return PushMessageToken(
+            memberId = memberId,
+            deviceId = deviceId,
+            token = token,
+            uploadDateTime = addedDateTime
+        )
     }
 }

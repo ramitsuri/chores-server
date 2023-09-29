@@ -53,16 +53,6 @@ class TestTasksRepository(
         return size
     }
 
-    override suspend fun delete(id: String): Boolean {
-        val toDelete = storage[id]
-        return toDelete?.let {
-            storage.remove(id)
-            true
-        } ?: run {
-            false
-        }
-    }
-
     override suspend fun edit(
         id: String,
         name: String,
@@ -104,6 +94,10 @@ class TestTasksRepository(
     }
 
     override suspend fun getForHouses(houseIds: List<String>): List<Task> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun get(ids: List<String>): List<Task> {
         TODO("Not yet implemented")
     }
 }

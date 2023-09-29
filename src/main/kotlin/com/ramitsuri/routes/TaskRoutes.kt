@@ -114,11 +114,11 @@ class TaskRoutes(
 
         // Delete by Id
         delete("{id}") {
-            val id = call.parameters["id"] ?: return@delete call.respond(
+            val taskId = call.parameters["id"] ?: return@delete call.respond(
                 invalidIdParamError.first,
                 invalidIdParamError.second
             )
-            val result = tasksTaskAssignmentsRepository.delete(id)
+            val result = tasksTaskAssignmentsRepository.delete(taskId)
             if (result) {
                 call.respond(HttpStatusCode.OK)
             } else {
@@ -128,11 +128,11 @@ class TaskRoutes(
 
         // Edit
         put("{id}") {
-            val id = call.parameters["id"] ?: return@put call.respond(
+            val taskId = call.parameters["id"] ?: return@put call.respond(
                 invalidIdParamError.first,
                 invalidIdParamError.second
             )
-            val existingTask = tasksRepository.get(id) ?: return@put call.respond(HttpStatusCode.NotFound)
+            val existingTask = tasksRepository.get(taskId) ?: return@put call.respond(HttpStatusCode.NotFound)
             val taskDto = call.receive<TaskDto>()
 
             var shouldDeleteTaskAssignments = false
@@ -182,7 +182,7 @@ class TaskRoutes(
 
             val result = if (shouldDeleteTaskAssignments) {
                 tasksTaskAssignmentsRepository.edit(
-                    id,
+                    taskId,
                     name,
                     description,
                     dueDateTime,
@@ -194,7 +194,7 @@ class TaskRoutes(
                 )
             } else {
                 tasksRepository.edit(
-                    id,
+                    taskId,
                     name,
                     description,
                     dueDateTime,

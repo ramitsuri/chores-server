@@ -41,9 +41,6 @@ dependencies {
     implementation('org.postgresql:postgresql:42.6.0')
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
 
-    // Event bus
-    implementation ("com.google.guava:guava-gwt:31.0.1-jre")
-
     // Logging
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("ch.qos.logback:logback-core:$logbackVersion")

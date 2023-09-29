@@ -7,11 +7,13 @@ import com.ramitsuri.data.LocalDateTimeConverter
 import com.ramitsuri.data.UuidConverter
 import com.ramitsuri.environment.EnvironmentRepository
 import com.ramitsuri.events.EventService
-import com.ramitsuri.events.GuavaEventService
+import com.ramitsuri.events.SystemEventService
 import com.ramitsuri.models.RepeatSchedulerConfig
 import com.ramitsuri.models.SchedulerRepeatType
 import com.ramitsuri.plugins.JwtService
-import com.ramitsuri.pushmessage.FirebasePushMessageService
+import com.ramitsuri.pushmessage.FirebasePushMessageDispatcher
+import com.ramitsuri.pushmessage.PushMessageDispatcher
+import com.ramitsuri.pushmessage.PushMessagePayloadGenerator
 import com.ramitsuri.pushmessage.PushMessageService
 import com.ramitsuri.repeater.RepeatScheduler
 import com.ramitsuri.repeater.TaskRepeater
@@ -37,7 +39,9 @@ import com.ramitsuri.routes.TaskAssignmentRoutes
 import com.ramitsuri.routes.TaskRoutes
 import com.ramitsuri.utils.DummyDataProvider
 import io.ktor.server.netty.Netty
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import java.time.ZoneId
 
 class AppContainer {
@@ -46,10 +50,15 @@ class AppContainer {
     private val instantConverter = InstantConverter()
     private val localDateTimeConverter = LocalDateTimeConverter()
 
+    private val eventService: EventService = SystemEventService()
+
+    private val ioDispatcher = Dispatchers.IO
+    private val coroutineScope = CoroutineScope(SupervisorJob())
+
     private val housesRepository = LocalHousesRepository(uuidConverter, instantConverter)
     private val membersRepository = LocalMembersRepository(instantConverter, uuidConverter)
     private val tasksRepository =
-        LocalTasksRepository(housesRepository, instantConverter, localDateTimeConverter, uuidConverter)
+        LocalTasksRepository(housesRepository, instantConverter, localDateTimeConverter, uuidConverter, eventService)
     private val taskAssignmentsRepository =
         LocalTaskAssignmentsRepository(
             tasksRepository,
@@ -57,10 +66,11 @@ class AppContainer {
             housesRepository,
             instantConverter,
             localDateTimeConverter,
-            uuidConverter
+            uuidConverter,
+            eventService,
         )
     private val tasksTaskAssignmentsRepository =
-        LocalTasksTaskAssignmentsRepository(localDateTimeConverter, uuidConverter)
+        LocalTasksTaskAssignmentsRepository(localDateTimeConverter, uuidConverter, eventService)
     private val memberAssignmentsRepository =
         LocalMemberAssignmentsRepository(
             membersRepository,
@@ -71,9 +81,7 @@ class AppContainer {
         TaskAssignmentAccessController(memberAssignmentsRepository, taskAssignmentsRepository, membersRepository)
     private val syncRepository = LocalSyncRepository(memberAssignmentsRepository, housesRepository)
     private val syncAccessController = SyncAccessController(syncRepository, membersRepository)
-    private val pushMessageTokenRepository = LocalPushMessageTokenRepository(uuidConverter)
-
-    private val eventService: EventService = GuavaEventService()
+    private val pushMessageTokenRepository = LocalPushMessageTokenRepository(uuidConverter, instantConverter)
 
     private val jwtService = JwtService(
         environment.getJwtIssuer(),
@@ -84,7 +92,23 @@ class AppContainer {
 
     val dummyDataProvider = DummyDataProvider()
 
-    //val pushMessagingService: PushMessageService = FirebasePushMessageService()
+    private val pushMessageDispatcher: PushMessageDispatcher = FirebasePushMessageDispatcher()
+    private val pushMessagePayloadGenerator = PushMessagePayloadGenerator(
+        tasksRepository = tasksRepository,
+        taskAssignmentsRepository = taskAssignmentsRepository,
+        memberAssignmentsRepository = memberAssignmentsRepository,
+        pushMessageTokenRepository = pushMessageTokenRepository
+    )
+
+    init {
+        PushMessageService(
+            pushMessageDispatcher = pushMessageDispatcher,
+            pushMessagePayloadGenerator = pushMessagePayloadGenerator,
+            coroutineScope = coroutineScope,
+            ioDispatcher = ioDispatcher,
+            eventService = eventService
+        )
+    }
 
     fun getJwtService() = jwtService
 
@@ -98,7 +122,6 @@ class AppContainer {
             LoginRoutes(jwtService, membersRepository),
             SyncRoutes(syncAccessController),
             PushMessageTokenRoute(pushMessageTokenRepository)
-            //DummyRoutes(dummyRepository),
         )
     }
 
@@ -109,7 +132,6 @@ class AppContainer {
     fun getTaskScheduler(): RepeatScheduler {
         val repeater =
             TaskRepeater(
-                eventService,
                 tasksRepository,
                 membersRepository,
                 housesRepository,

@@ -3,6 +3,8 @@ package com.ramitsuri.repository.local
 import com.ramitsuri.data.Converter
 import com.ramitsuri.data.DatabaseFactory
 import com.ramitsuri.data.TaskAssignments
+import com.ramitsuri.events.Event
+import com.ramitsuri.events.EventService
 import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.CreateType
 import com.ramitsuri.models.Member
@@ -13,6 +15,7 @@ import com.ramitsuri.models.TaskAssignmentDto
 import com.ramitsuri.repository.interfaces.HousesRepository
 import com.ramitsuri.repository.interfaces.MembersRepository
 import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
+import com.ramitsuri.repository.interfaces.TaskAssignmentInsert
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
 import org.jetbrains.exposed.sql.ResultRow
@@ -20,11 +23,11 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.andNot
 import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.batchInsert
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.statements.InsertStatement
 import org.jetbrains.exposed.sql.update
 import java.time.Instant
 import java.time.LocalDateTime
@@ -36,36 +39,25 @@ class LocalTaskAssignmentsRepository(
     private val housesRepository: HousesRepository,
     private val instantConverter: Converter<Instant, String>,
     private val localDateTimeConverter: Converter<LocalDateTime, String>,
-    private val uuidConverter: Converter<String, UUID>
+    private val uuidConverter: Converter<String, UUID>,
+    private val eventService: EventService
 ) : TaskAssignmentsRepository {
-    override suspend fun add(
-        progressStatus: ProgressStatus,
-        statusDate: Instant,
-        taskId: String,
-        memberId: String,
-        dueDate: LocalDateTime,
-        createdDate: Instant,
-        createType: CreateType
-    ): TaskAssignment? {
-        val task = tasksRepository.get(taskId) ?: return null
-        val member = membersRepository.get(memberId) ?: return null
-        var statement: InsertStatement<Number>? = null
-        DatabaseFactory.query {
-            statement = TaskAssignments.insert { taskAssignment ->
-                taskAssignment[TaskAssignments.statusType] = progressStatus.key
-                taskAssignment[TaskAssignments.statusDate] = instantConverter.toStorage(statusDate)
-                taskAssignment[TaskAssignments.taskId] = uuidConverter.toStorage(taskId)
-                taskAssignment[TaskAssignments.memberId] = uuidConverter.toStorage(memberId)
-                taskAssignment[TaskAssignments.dueDate] = localDateTimeConverter.toStorage(dueDate)
-                taskAssignment[TaskAssignments.createdDate] = instantConverter.toStorage(createdDate)
-                taskAssignment[TaskAssignments.createType] = createType.key
-                taskAssignment[TaskAssignments.statusByMember] = null
+    override suspend fun add(taskAssignments: List<TaskAssignmentInsert>) {
+        val insertedIds = DatabaseFactory.query {
+            TaskAssignments.batchInsert(data = taskAssignments, shouldReturnGeneratedValues = true) { toInsert ->
+                this[TaskAssignments.statusType] = toInsert.progressStatus.key
+                this[TaskAssignments.statusDate] = instantConverter.toStorage(toInsert.progressStatusDateTime)
+                this[TaskAssignments.taskId] = uuidConverter.toStorage(toInsert.taskId)
+                this[TaskAssignments.memberId] = uuidConverter.toStorage(toInsert.memberId)
+                this[TaskAssignments.dueDate] = localDateTimeConverter.toStorage(toInsert.dueDateTime)
+                this[TaskAssignments.createdDate] = instantConverter.toStorage(toInsert.createdDateTime)
+                this[TaskAssignments.createType] = toInsert.createType.key
+                this[TaskAssignments.statusByMember] = null
+            }.map {
+                it[TaskAssignments.id].toString()
             }
         }
-        statement?.resultedValues?.get(0)?.let {
-            return rowToTaskAssignment(it, member, task)
-        }
-        return null
+        eventService.post(Event.AssignmentsAdded(insertedIds))
     }
 
     override suspend fun edit(taskAssignments: List<TaskAssignmentDto>, requesterMemberId: String): List<String> {
@@ -74,7 +66,10 @@ class LocalTaskAssignmentsRepository(
             taskAssignments.forEach { taskAssignmentDto ->
                 val uuid = uuidConverter.toStorage(taskAssignmentDto.id)
                 val requesterMemberIdUuid = uuidConverter.toStorage(requesterMemberId)
-                val result = TaskAssignments.update({ TaskAssignments.id.eq(uuid) }) {
+                val result = TaskAssignments.update({
+                    TaskAssignments.id.eq(uuid)
+                        .andNot { TaskAssignments.statusType.eq(taskAssignmentDto.progressStatus) }
+                }) {
                     it[statusDate] = instantConverter.toStorage(taskAssignmentDto.progressStatusDate)
                     it[statusType] = taskAssignmentDto.progressStatus
                     it[statusByMember] = requesterMemberIdUuid
@@ -84,6 +79,7 @@ class LocalTaskAssignmentsRepository(
                 }
             }
         }
+        eventService.post(Event.AssignmentsUpdated(updatedIds))
         return updatedIds
     }
 
@@ -103,6 +99,37 @@ class LocalTaskAssignmentsRepository(
         }
     }
 
+    override suspend fun get(taskAssignmentIds: List<String>): List<TaskAssignment> {
+        val taskAssignmentUuids = taskAssignmentIds.map { uuidConverter.toStorage(it) }
+        val rowValues = DatabaseFactory.query {
+            TaskAssignments.select { TaskAssignments.id.inList(taskAssignmentUuids) }
+                .filterNotNull()
+                .map { row ->
+                    rowToTaskAssignmentRawValues(row)
+                }
+        }
+        return rowValues.mapNotNull { rawValue ->
+            val member = membersRepository.get(rawValue.memberId)
+            val task = tasksRepository.get(rawValue.taskId)
+            if (member != null && task != null) {
+                TaskAssignment(
+                    id = rawValue.id,
+                    progressStatus = rawValue.progressStatus,
+                    progressStatusDate = rawValue.statusDate,
+                    task = task,
+                    member = member,
+                    dueDateTime = rawValue.dueDate,
+                    createdDate = rawValue.createDate,
+                    createType = rawValue.createType,
+                    statusByMember = rawValue.statusByMember
+
+                )
+            } else {
+                null
+            }
+        }
+    }
+
     override suspend fun editOwn(taskAssignments: List<TaskAssignmentDto>, requesterMemberId: String): List<String> {
         val updatedIds = mutableListOf<String>()
         DatabaseFactory.query {
@@ -110,7 +137,9 @@ class LocalTaskAssignmentsRepository(
                 val uuid = uuidConverter.toStorage(taskAssignmentDto.id)
                 val requesterMemberIdUuid = uuidConverter.toStorage(requesterMemberId)
                 val result = TaskAssignments.update({
-                    TaskAssignments.id.eq(uuid).and { TaskAssignments.memberId.eq(requesterMemberIdUuid) }
+                    TaskAssignments.id.eq(uuid)
+                        .and { TaskAssignments.memberId.eq(requesterMemberIdUuid) }
+                        .andNot { TaskAssignments.statusType.eq(taskAssignmentDto.progressStatus) }
                 }) {
                     it[statusDate] = instantConverter.toStorage(taskAssignmentDto.progressStatusDate)
                     it[statusType] = taskAssignmentDto.progressStatus
@@ -121,6 +150,7 @@ class LocalTaskAssignmentsRepository(
                 }
             }
         }
+        eventService.post(Event.AssignmentsUpdated(updatedIds))
         return updatedIds
     }
 
@@ -136,7 +166,9 @@ class LocalTaskAssignmentsRepository(
                 val uuid = uuidConverter.toStorage(taskAssignmentDto.id)
                 val requesterMemberIdUuid = uuidConverter.toStorage(requesterMemberId)
                 val result = TaskAssignments.update({
-                    TaskAssignments.id.eq(uuid).and { TaskAssignments.taskId.inList(taskIdUuids) }
+                    TaskAssignments.id.eq(uuid)
+                        .and { TaskAssignments.taskId.inList(taskIdUuids) }
+                        .andNot { TaskAssignments.statusType.eq(taskAssignmentDto.progressStatus) }
                 }) {
                     it[statusDate] = instantConverter.toStorage(taskAssignmentDto.progressStatusDate)
                     it[statusType] = taskAssignmentDto.progressStatus
@@ -147,6 +179,7 @@ class LocalTaskAssignmentsRepository(
                 }
             }
         }
+        eventService.post(Event.AssignmentsUpdated(updatedIds))
         return updatedIds
     }
 
@@ -257,6 +290,26 @@ class LocalTaskAssignmentsRepository(
         )
     }
 
+    private fun rowToTaskAssignmentRawValues(row: ResultRow): RawValues {
+        val statusByMember = row[TaskAssignments.statusByMember]
+        val statusByMemberString = if (statusByMember != null) {
+            uuidConverter.toMain(statusByMember)
+        } else {
+            null
+        }
+        return RawValues(
+            id = row[TaskAssignments.id].toString(),
+            memberId = uuidConverter.toMain(row[TaskAssignments.memberId]),
+            taskId = uuidConverter.toMain(row[TaskAssignments.taskId]),
+            statusDate = instantConverter.toMain(row[TaskAssignments.statusDate]),
+            progressStatus = ProgressStatus.fromKey(row[TaskAssignments.statusType]),
+            dueDate = localDateTimeConverter.toMain(row[TaskAssignments.dueDate]),
+            createDate = instantConverter.toMain(row[TaskAssignments.createdDate]),
+            createType = CreateType.fromKey(row[TaskAssignments.createType]),
+            statusByMember = statusByMemberString
+        )
+    }
+
     private fun rowToMemberId(row: ResultRow): String {
         return uuidConverter.toMain(row[TaskAssignments.memberId])
     }
@@ -264,4 +317,16 @@ class LocalTaskAssignmentsRepository(
     private fun rowToTaskId(row: ResultRow): String {
         return uuidConverter.toMain(row[TaskAssignments.taskId])
     }
+
+    private data class RawValues(
+        val id: String,
+        val memberId: String,
+        val taskId: String,
+        val statusDate: Instant,
+        val progressStatus: ProgressStatus,
+        val dueDate: LocalDateTime,
+        val createDate: Instant,
+        val createType: CreateType,
+        val statusByMember: String?
+    )
 }

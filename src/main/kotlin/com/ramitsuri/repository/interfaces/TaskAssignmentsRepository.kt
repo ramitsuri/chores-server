@@ -8,15 +8,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 
 interface TaskAssignmentsRepository {
-    suspend fun add(
-        progressStatus: ProgressStatus,
-        statusDate: Instant,
-        taskId: String,
-        memberId: String,
-        dueDate: LocalDateTime,
-        createdDate: Instant,
-        createType: CreateType
-    ): TaskAssignment?
+    suspend fun add(taskAssignments: List<TaskAssignmentInsert>)
 
     suspend fun edit(taskAssignments: List<TaskAssignmentDto>, requesterMemberId: String): List<String>
 
@@ -32,6 +24,8 @@ interface TaskAssignmentsRepository {
 
     suspend fun get(): List<TaskAssignment>
 
+    suspend fun get(taskAssignmentIds: List<String>): List<TaskAssignment>
+
     suspend fun get(filter: TaskAssignmentFilter): List<TaskAssignment>
 
     // Get if the assignment's task belongs to requester member's houses
@@ -44,3 +38,23 @@ data class TaskAssignmentFilter(
     val progressStatus: ProgressStatus = ProgressStatus.UNKNOWN,
     val onlyActiveAndPausedHouse: Boolean
 )
+
+data class TaskAssignmentInsert(
+    val progressStatus: ProgressStatus,
+    val progressStatusDateTime: Instant,
+    val taskId: String,
+    val memberId: String,
+    val dueDateTime: LocalDateTime,
+    val createdDateTime: Instant,
+    val createType: CreateType
+) {
+    constructor(taskAssignment: TaskAssignment) : this(
+        progressStatus = taskAssignment.progressStatus,
+        progressStatusDateTime = taskAssignment.progressStatusDate,
+        taskId = taskAssignment.task.id,
+        memberId = taskAssignment.member.id,
+        dueDateTime = taskAssignment.dueDateTime,
+        createdDateTime = taskAssignment.createdDate,
+        createType = taskAssignment.createType
+    )
+}

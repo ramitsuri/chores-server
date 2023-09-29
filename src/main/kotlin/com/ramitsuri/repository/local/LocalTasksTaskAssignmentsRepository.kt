@@ -4,6 +4,8 @@ import com.ramitsuri.data.Converter
 import com.ramitsuri.data.DatabaseFactory
 import com.ramitsuri.data.TaskAssignments
 import com.ramitsuri.data.Tasks
+import com.ramitsuri.events.Event
+import com.ramitsuri.events.EventService
 import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.ProgressStatus
 import com.ramitsuri.models.RepeatUnit
@@ -17,10 +19,11 @@ import java.util.UUID
 
 class LocalTasksTaskAssignmentsRepository(
     private val localDateTimeConverter: Converter<LocalDateTime, String>,
-    private val uuidConverter: Converter<String, UUID>
+    private val uuidConverter: Converter<String, UUID>,
+    private val eventService: EventService
 ) : TasksTaskAssignmentsRepository {
     override suspend fun edit(
-        id: String,
+        taskId: String,
         name: String,
         description: String,
         dueDate: LocalDateTime,
@@ -30,8 +33,8 @@ class LocalTasksTaskAssignmentsRepository(
         rotateMember: Boolean,
         status: ActiveStatus
     ): Boolean {
-        DatabaseFactory.queryWithTransaction { transaction ->
-            val uuid = uuidConverter.toStorage(id)
+        val success = DatabaseFactory.queryWithTransaction { transaction ->
+            val uuid = uuidConverter.toStorage(taskId)
             val updateSuccess = Tasks.update({ Tasks.id.eq(uuid) }) { task ->
                 task[Tasks.name] = name
                 task[Tasks.description] = description
@@ -60,12 +63,15 @@ class LocalTasksTaskAssignmentsRepository(
             }
             return@queryWithTransaction true
         }
-        return true
+        if (success) {
+            eventService.post(Event.TaskEdited(taskId))
+        }
+        return success
     }
 
-    override suspend fun delete(id: String): Boolean {
-        DatabaseFactory.queryWithTransaction { transaction ->
-            val uuid = uuidConverter.toStorage(id)
+    override suspend fun delete(taskId: String): Boolean {
+        val success = DatabaseFactory.queryWithTransaction { transaction ->
+            val uuid = uuidConverter.toStorage(taskId)
             val deleteTaskSuccess = Tasks.deleteWhere { Tasks.id.eq(uuid) } > 0
             if (!deleteTaskSuccess) {
                 return@queryWithTransaction false
@@ -81,6 +87,9 @@ class LocalTasksTaskAssignmentsRepository(
             }
             return@queryWithTransaction true
         }
-        return true
+        if (success) {
+            eventService.post(Event.TaskEdited(taskId))
+        }
+        return success
     }
 }
