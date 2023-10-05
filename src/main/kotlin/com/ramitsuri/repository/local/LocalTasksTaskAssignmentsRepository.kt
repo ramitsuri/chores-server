@@ -64,7 +64,10 @@ class LocalTasksTaskAssignmentsRepository(
             return@queryWithTransaction true
         }
         if (success) {
-            eventService.post(Event.TaskEdited(taskId))
+            eventService.post(
+                Event.TaskEdited(taskId),
+                Event.TaskNeedsAssignments
+            )
         }
         return success
     }

@@ -32,7 +32,7 @@ class TaskRepeater(
 ) : Loggable {
     override val log = logger()
 
-    suspend fun start(
+    suspend fun add(
         runDateTime: ZonedDateTime,
         zoneId: ZoneId
     ) {

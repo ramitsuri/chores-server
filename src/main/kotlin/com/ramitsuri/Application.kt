@@ -23,7 +23,7 @@ fun main() {
         appContainer.dummyDataProvider.setup()
     }
     CoroutineScope(Dispatchers.Default).launch {
-        appContainer.getTaskScheduler().schedule()
+        appContainer.getTaskScheduler().start()
     }
     embeddedServer(appContainer.getApplicationEngine(), port = 8081, configure = {
         connectionGroupSize = 2

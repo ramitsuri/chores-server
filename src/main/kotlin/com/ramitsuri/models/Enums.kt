@@ -1,7 +1,5 @@
 package com.ramitsuri.models
 
-import java.time.Duration
-
 enum class RepeatUnit(val key: Int) {
     NONE(0),
     DAY(1),
@@ -115,22 +113,4 @@ enum class Access(val key: Int) {
             return NONE
         }
     }
-}
-
-enum class SchedulerRepeatType(
-    val repeatDuration: Duration,
-    val warmUpStartDuration: Duration
-) {
-    MINUTE(
-        repeatDuration = Duration.ofMinutes(1),
-        warmUpStartDuration = Duration.ofMinutes(1).minusSeconds(10)
-    ),
-    HOUR(
-        repeatDuration = Duration.ofHours(1),
-        warmUpStartDuration = Duration.ofHours(1).minusSeconds(30)
-    ),
-    DAY(
-        repeatDuration = Duration.ofDays(1),
-        warmUpStartDuration = Duration.ofDays(1).minusSeconds(30)
-    )
 }

@@ -52,7 +52,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
     fun testStart_shouldNotAddAnything_ifRepositoriesEmpty() {
         runBlocking {
             val addDateTime = ZonedDateTime.now(zoneId)
-            taskRepeater.start(addDateTime, zoneId)
+            taskRepeater.add(addDateTime, zoneId)
             val taskAssignments = taskAssignmentsRepository.get()
             assertTrue(taskAssignments.isEmpty())
         }
@@ -76,7 +76,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(1, taskAssignmentsRepository.get().size)
@@ -101,7 +101,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(1, taskAssignmentsRepository.get().size)
@@ -126,7 +126,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(1, taskAssignmentsRepository.get().size)
@@ -152,7 +152,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
 
             // Act
             val task1 = tasksRepository.get()[0]
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
             val taskAssignment = taskAssignmentsRepository.get()[0]
 
             // Assert
@@ -190,7 +190,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(1, taskAssignmentsRepository.get().size)
@@ -223,7 +223,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(2, taskAssignmentsRepository.get().size)
@@ -257,7 +257,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(2, taskAssignmentsRepository.get().size)
@@ -291,8 +291,8 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(2, taskAssignmentsRepository.get().size)
@@ -326,7 +326,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             val assignments = taskAssignmentsRepository.get()
@@ -360,7 +360,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(member1, taskAssignmentsRepository.get()[1].member)
@@ -394,7 +394,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(member2, taskAssignmentsRepository.get()[1].member)
@@ -426,7 +426,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
             val addedTaskAssignment = taskAssignmentsRepository.get()[1]
 
             // Assert
@@ -452,7 +452,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(0, taskAssignmentsRepository.get().size)
@@ -477,7 +477,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(0, taskAssignmentsRepository.get().size)
@@ -502,7 +502,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(1, taskAssignmentsRepository.get().size)
@@ -529,7 +529,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(1, taskAssignmentsRepository.get().size)
@@ -555,7 +555,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(0, taskAssignmentsRepository.get().size)
@@ -581,7 +581,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(0, taskAssignmentsRepository.get().size)
@@ -607,7 +607,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(0, taskAssignmentsRepository.get().size)
@@ -634,7 +634,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(0, taskAssignmentsRepository.get().size)
@@ -671,7 +671,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
             )
 
             // Act
-            taskRepeater.start(runDateTime, zoneId)
+            taskRepeater.add(runDateTime, zoneId)
 
             // Assert
             assertEquals(1, taskAssignmentsRepository.get().size)
@@ -704,7 +704,7 @@ class TaskRepeaterTest : BaseRepeaterTest() {
 
             // Act
             val runTime = LocalDateTime.parse("2022-11-06T08:00").atZone(zoneId)
-            taskRepeater.start(runTime, zoneId)
+            taskRepeater.add(runTime, zoneId)
 
             // Assert
             val addedAssignment = taskAssignmentsRepository.get()[1]

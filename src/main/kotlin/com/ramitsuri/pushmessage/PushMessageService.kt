@@ -35,6 +35,10 @@ class PushMessageService(
             is Event.TaskEdited -> {
                 forTask(event.taskId)
             }
+
+            else -> {
+                // Nothing
+            }
         }
     }
 

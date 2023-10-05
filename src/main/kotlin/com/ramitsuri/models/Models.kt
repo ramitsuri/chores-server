@@ -140,11 +140,6 @@ data class SyncResult(
     val memberListAssociations: List<MemberAssignment>
 )
 
-data class RepeatSchedulerConfig(
-    val repeatType: SchedulerRepeatType,
-    val zoneId: ZoneId
-)
-
 @Serializable
 data class LoginParam(val id: String?, val key: String?)
 

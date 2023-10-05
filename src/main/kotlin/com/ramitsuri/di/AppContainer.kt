@@ -8,14 +8,14 @@ import com.ramitsuri.data.UuidConverter
 import com.ramitsuri.environment.EnvironmentRepository
 import com.ramitsuri.events.EventService
 import com.ramitsuri.events.SystemEventService
-import com.ramitsuri.models.RepeatSchedulerConfig
-import com.ramitsuri.models.SchedulerRepeatType
 import com.ramitsuri.plugins.JwtService
 import com.ramitsuri.pushmessage.FirebasePushMessageDispatcher
 import com.ramitsuri.pushmessage.PushMessageDispatcher
 import com.ramitsuri.pushmessage.PushMessagePayloadGenerator
 import com.ramitsuri.pushmessage.PushMessageService
 import com.ramitsuri.repeater.RepeatScheduler
+import com.ramitsuri.repeater.RepeatSchedulerConfig
+import com.ramitsuri.repeater.SchedulerRepeatType
 import com.ramitsuri.repeater.TaskRepeater
 import com.ramitsuri.repository.access.SyncAccessController
 import com.ramitsuri.repository.access.TaskAssignmentAccessController
@@ -42,6 +42,7 @@ import io.ktor.server.netty.Netty
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.datetime.Clock
 import java.time.ZoneId
 
 class AppContainer {
@@ -143,7 +144,15 @@ class AppContainer {
             repeatType = SchedulerRepeatType.HOUR,
             zoneId = ZoneId.of("UTC")
         )
-        return RepeatScheduler(config, repeater, LocalRunTimeLogsRepository(instantConverter))
+        return RepeatScheduler(
+            config = config,
+            taskRepeater = repeater,
+            runTimeLogRepository = LocalRunTimeLogsRepository(instantConverter),
+            clock = Clock.System,
+            coroutineScope = coroutineScope,
+            ioDispatcher = ioDispatcher,
+            eventService = eventService
+        )
     }
 
     fun getApplicationEngine(): Netty {

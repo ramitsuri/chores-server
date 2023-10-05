@@ -68,6 +68,7 @@ class LocalTasksRepository(
             }
         }
         statement?.resultedValues?.get(0)?.let {
+            eventService.post(Event.TaskNeedsAssignments)
             return rowToTask(it)
         } ?: run {
             log.warning("Cannot convert row to Task")

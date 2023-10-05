@@ -8,6 +8,5 @@ object Constants {
     const val DB_URL_TEST = "jdbc:sqlite:data/test.db"
     const val JWT_REALM = "Chores"
     const val JWT_AUTH_CONFIG_BASE = "auth_base"
-    val INSTANT_MIN: Instant = Instant.ofEpochMilli(1609459200000) // 2021-01-01 00:00:00 UTC
     val TOKEN_EXPIRATION: Duration = Duration.ofDays(30)
 }

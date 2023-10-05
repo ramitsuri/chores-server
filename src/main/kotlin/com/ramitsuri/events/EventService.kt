@@ -6,5 +6,5 @@ interface EventService {
 
     val events: SharedFlow<Event>
 
-    suspend fun post(event: Event)
+    suspend fun post(vararg events: Event)
 }
