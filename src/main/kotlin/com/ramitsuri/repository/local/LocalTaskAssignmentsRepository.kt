@@ -7,9 +7,7 @@ import com.ramitsuri.events.Event
 import com.ramitsuri.events.EventService
 import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.CreateType
-import com.ramitsuri.models.Member
 import com.ramitsuri.models.ProgressStatus
-import com.ramitsuri.models.Task
 import com.ramitsuri.models.TaskAssignment
 import com.ramitsuri.models.TaskAssignmentDto
 import com.ramitsuri.repository.interfaces.HousesRepository
@@ -84,19 +82,12 @@ class LocalTaskAssignmentsRepository(
     }
 
     override suspend fun get(): List<TaskAssignment> {
-        val members = membersRepository.get()
-        val tasks = tasksRepository.get()
-        return DatabaseFactory.query {
-            TaskAssignments.selectAll().filterNotNull().mapNotNull { row ->
-                val member = members.firstOrNull { it.id == rowToMemberId(row) }
-                val task = tasks.firstOrNull { it.id == rowToTaskId(row) }
-                if (member != null && task != null) {
-                    rowToTaskAssignment(row, member, task)
-                } else {
-                    null
-                }
+        val rowValues = DatabaseFactory.query {
+            TaskAssignments.selectAll().filterNotNull().map { row ->
+                rowToTaskAssignmentRawValues(row)
             }
         }
+        return rowValues.toAssignments()
     }
 
     override suspend fun get(taskAssignmentIds: List<String>): List<TaskAssignment> {
@@ -108,26 +99,7 @@ class LocalTaskAssignmentsRepository(
                     rowToTaskAssignmentRawValues(row)
                 }
         }
-        return rowValues.mapNotNull { rawValue ->
-            val member = membersRepository.get(rawValue.memberId)
-            val task = tasksRepository.get(rawValue.taskId)
-            if (member != null && task != null) {
-                TaskAssignment(
-                    id = rawValue.id,
-                    progressStatus = rawValue.progressStatus,
-                    progressStatusDate = rawValue.statusDate,
-                    task = task,
-                    member = member,
-                    dueDateTime = rawValue.dueDate,
-                    createdDate = rawValue.createDate,
-                    createType = rawValue.createType,
-                    statusByMember = rawValue.statusByMember
-
-                )
-            } else {
-                null
-            }
-        }
+        return rowValues.toAssignments()
     }
 
     override suspend fun editOwn(taskAssignments: List<TaskAssignmentDto>, requesterMemberId: String): List<String> {
@@ -184,16 +156,7 @@ class LocalTaskAssignmentsRepository(
     }
 
     override suspend fun get(filter: TaskAssignmentFilter): List<TaskAssignment> {
-        val members = membersRepository.get()
-        val houses = housesRepository.get()
-        val houseIdsFiltered = if (filter.onlyActiveAndPausedHouse) {
-            houses.filter { it.status == ActiveStatus.ACTIVE || it.status == ActiveStatus.PAUSED }
-                .map { it.id }
-        } else {
-            houses.map { it.id }
-        }
-        val tasks = tasksRepository.getForHouses(houseIdsFiltered)
-        return DatabaseFactory.query {
+        val rowValues = DatabaseFactory.query {
             var query = TaskAssignments
                 .selectAll()
             filter.memberId?.let {
@@ -208,20 +171,14 @@ class LocalTaskAssignmentsRepository(
                 val condition = TaskAssignments.statusType eq filter.progressStatus.key
                 query = query.andWhere { condition }
             }
-            query.filterNotNull().mapNotNull { row ->
-                val member = members.firstOrNull { it.id == rowToMemberId(row) }
-                val task = tasks.firstOrNull { it.id == rowToTaskId(row) }
-                if (member != null && task != null) {
-                    rowToTaskAssignment(row, member, task)
-                } else {
-                    null
-                }
+            query.filterNotNull().map { row ->
+                rowToTaskAssignmentRawValues(row)
             }
         }
+        return rowValues.toAssignments()
     }
 
     override suspend fun getForHouse(filter: TaskAssignmentFilter, houseIds: List<String>): List<TaskAssignment> {
-        val members = membersRepository.get()
         val houses = housesRepository.get()
         val houseIdsFiltered = if (filter.onlyActiveAndPausedHouse) {
             houses.filter { houseIds.contains(it.id) }
@@ -233,7 +190,7 @@ class LocalTaskAssignmentsRepository(
         // Get tasks that belong to the houses provided
         val tasks = tasksRepository.getForHouses(houseIdsFiltered)
         val taskIdUuids = tasks.map { uuidConverter.toStorage(it.id) }
-        return DatabaseFactory.query {
+        val rowValues = DatabaseFactory.query {
             var query = TaskAssignments
                 .selectAll()
             filter.memberId?.let {
@@ -252,42 +209,11 @@ class LocalTaskAssignmentsRepository(
             val condition = TaskAssignments.taskId inList taskIdUuids
             query = query.andWhere { condition }
 
-            query.filterNotNull().mapNotNull { row ->
-                val member = members.firstOrNull { it.id == rowToMemberId(row) }
-                val task = tasks.firstOrNull { it.id == rowToTaskId(row) }
-                if (member != null && task != null) {
-                    rowToTaskAssignment(row, member, task)
-                } else {
-                    null
-                }
+            query.filterNotNull().map { row ->
+                rowToTaskAssignmentRawValues(row)
             }
         }
-    }
-
-    private fun rowToTaskAssignment(row: ResultRow, member: Member, task: Task): TaskAssignment {
-        val id = row[TaskAssignments.id].toString()
-        val statusDate = instantConverter.toMain(row[TaskAssignments.statusDate])
-        val progressStatus = ProgressStatus.fromKey(row[TaskAssignments.statusType])
-        val dueDate = localDateTimeConverter.toMain(row[TaskAssignments.dueDate])
-        val createdDate = instantConverter.toMain(row[TaskAssignments.createdDate])
-        val createType = CreateType.fromKey(row[TaskAssignments.createType])
-        val statusByMember = row[TaskAssignments.statusByMember]
-        val statusByMemberString = if (statusByMember != null) {
-            uuidConverter.toMain(statusByMember)
-        } else {
-            null
-        }
-        return TaskAssignment(
-            id,
-            progressStatus,
-            statusDate,
-            task,
-            member,
-            dueDate,
-            createdDate,
-            createType,
-            statusByMemberString
-        )
+        return rowValues.toAssignments()
     }
 
     private fun rowToTaskAssignmentRawValues(row: ResultRow): RawValues {
@@ -310,12 +236,26 @@ class LocalTaskAssignmentsRepository(
         )
     }
 
-    private fun rowToMemberId(row: ResultRow): String {
-        return uuidConverter.toMain(row[TaskAssignments.memberId])
-    }
-
-    private fun rowToTaskId(row: ResultRow): String {
-        return uuidConverter.toMain(row[TaskAssignments.taskId])
+    private suspend fun List<RawValues>.toAssignments(): List<TaskAssignment> {
+        return mapNotNull { rawValue ->
+            val member = membersRepository.get(rawValue.memberId)
+            val task = tasksRepository.get(rawValue.taskId)
+            if (member != null && task != null) {
+                TaskAssignment(
+                    id = rawValue.id,
+                    progressStatus = rawValue.progressStatus,
+                    progressStatusDate = rawValue.statusDate,
+                    task = task,
+                    member = member,
+                    dueDateTime = rawValue.dueDate,
+                    createdDate = rawValue.createDate,
+                    createType = rawValue.createType,
+                    statusByMember = rawValue.statusByMember
+                )
+            } else {
+                null
+            }
+        }
     }
 
     private data class RawValues(
