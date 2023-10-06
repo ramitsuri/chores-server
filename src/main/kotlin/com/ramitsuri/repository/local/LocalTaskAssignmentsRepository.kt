@@ -78,7 +78,10 @@ class LocalTaskAssignmentsRepository(
             }
         }
         eventService.post(Event.AssignmentsUpdated(updatedIds))
-        return updatedIds
+        // Returning everything so that clients can update their local state. It's possible that some assignments
+        // weren't updated in case they already had the new progress status from a different client. In that case, the
+        // assignment does have the new status, just not from the client requesting this change.
+        return taskAssignments.map { it.id }
     }
 
     override suspend fun get(): List<TaskAssignment> {
@@ -123,7 +126,10 @@ class LocalTaskAssignmentsRepository(
             }
         }
         eventService.post(Event.AssignmentsUpdated(updatedIds))
-        return updatedIds
+        // Returning everything so that clients can update their local state. It's possible that some assignments
+        // weren't updated in case they already had the new progress status from a different client. In that case, the
+        // assignment does have the new status, just not from the client requesting this change.
+        return taskAssignments.map { it.id }
     }
 
     override suspend fun editForHouse(
@@ -152,7 +158,10 @@ class LocalTaskAssignmentsRepository(
             }
         }
         eventService.post(Event.AssignmentsUpdated(updatedIds))
-        return updatedIds
+        // Returning everything so that clients can update their local state. It's possible that some assignments
+        // weren't updated in case they already had the new progress status from a different client. In that case, the
+        // assignment does have the new status, just not from the client requesting this change.
+        return taskAssignments.map { it.id }
     }
 
     override suspend fun get(filter: TaskAssignmentFilter): List<TaskAssignment> {
