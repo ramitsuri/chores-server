@@ -1,5 +1,5 @@
 runtime: java11
-entrypoint: 'java -jar ChoresServer-0.0.23-all.jar'
+entrypoint: 'java -jar ChoresServer-0.0.24-all.jar'
 automatic_scaling:
   min_instances: 1
   max_instances: 1
