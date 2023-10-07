@@ -145,4 +145,4 @@ build/
 .DS_Store
 
 # Firebase Service Account json
-google.json
+src/main/resources/google.json

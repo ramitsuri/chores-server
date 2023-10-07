@@ -7,14 +7,13 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
 import com.google.firebase.messaging.Notification
 import com.ramitsuri.extensions.Loggable
-import java.io.FileInputStream
 
 class FirebasePushMessageDispatcher : PushMessageDispatcher, Loggable {
     override val log = logger()
     private val messaging: FirebaseMessaging
 
     init {
-        val serviceAccount = FileInputStream("./google.json")
+        val serviceAccount = object {}.javaClass.getResourceAsStream("/google.json")
         val options = FirebaseOptions.builder()
             .setCredentials(GoogleCredentials.fromStream(serviceAccount))
             .build()

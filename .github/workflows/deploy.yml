@@ -19,8 +19,8 @@ jobs:
 
       - name: Add google.json from secrets
         run: |
-          touch google.json
-          echo "${{ secrets.GOOGLE_JSON }}" >> google.json
+          touch src/main/resources/google.json
+          echo "${{ secrets.GOOGLE_JSON }}" >> src/main/resources/google.json
 
       - name: Add environment vars from secrets
         run: |
