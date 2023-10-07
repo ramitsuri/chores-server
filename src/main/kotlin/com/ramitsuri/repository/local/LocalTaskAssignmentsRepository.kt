@@ -17,6 +17,7 @@ import com.ramitsuri.repository.interfaces.TaskAssignmentInsert
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
@@ -84,13 +85,15 @@ class LocalTaskAssignmentsRepository(
         return taskAssignments.map { it.id }
     }
 
-    override suspend fun get(): List<TaskAssignment> {
-        val rowValues = DatabaseFactory.query {
-            TaskAssignments.selectAll().filterNotNull().map { row ->
-                rowToTaskAssignmentRawValues(row)
-            }
-        }
-        return rowValues.toAssignments()
+    override suspend fun getMostRecentForTask(taskId: String): TaskAssignment? {
+        val taskUuid = uuidConverter.toStorage(taskId)
+        val rowValue = DatabaseFactory.query {
+            TaskAssignments.select { TaskAssignments.taskId.eq(taskUuid) }
+                .orderBy(TaskAssignments.dueDate to SortOrder.DESC)
+                .limit(1)
+                .firstOrNull()
+        } ?: return null
+        return rowToTaskAssignmentRawValues(rowValue).toAssignment()
     }
 
     override suspend fun get(taskAssignmentIds: List<String>): List<TaskAssignment> {
@@ -247,23 +250,27 @@ class LocalTaskAssignmentsRepository(
 
     private suspend fun List<RawValues>.toAssignments(): List<TaskAssignment> {
         return mapNotNull { rawValue ->
-            val member = membersRepository.get(rawValue.memberId)
-            val task = tasksRepository.get(rawValue.taskId)
-            if (member != null && task != null) {
-                TaskAssignment(
-                    id = rawValue.id,
-                    progressStatus = rawValue.progressStatus,
-                    progressStatusDate = rawValue.statusDate,
-                    task = task,
-                    member = member,
-                    dueDateTime = rawValue.dueDate,
-                    createdDate = rawValue.createDate,
-                    createType = rawValue.createType,
-                    statusByMember = rawValue.statusByMember
-                )
-            } else {
-                null
-            }
+            rawValue.toAssignment()
+        }
+    }
+
+    private suspend fun RawValues.toAssignment(): TaskAssignment? {
+        val member = membersRepository.get(memberId)
+        val task = tasksRepository.get(taskId)
+        return if (member != null && task != null) {
+            TaskAssignment(
+                id = id,
+                progressStatus = progressStatus,
+                progressStatusDate = statusDate,
+                task = task,
+                member = member,
+                dueDateTime = dueDate,
+                createdDate = createDate,
+                createType = createType,
+                statusByMember = statusByMember
+            )
+        } else {
+            null
         }
     }
 

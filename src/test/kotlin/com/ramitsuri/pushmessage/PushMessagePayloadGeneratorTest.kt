@@ -11,6 +11,7 @@ import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.models.Task
 import com.ramitsuri.models.TaskAssignment
 import com.ramitsuri.models.TaskAssignmentDto
+import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
 import com.ramitsuri.repository.interfaces.TaskAssignmentInsert
 import com.ramitsuri.testutils.BaseNeedsDatabaseTest
 import kotlinx.coroutines.runBlocking
@@ -322,7 +323,8 @@ class PushMessagePayloadGeneratorTest : BaseNeedsDatabaseTest() {
                 )
             )
             tasks = testAppContainer.tasksRepository.get()
-            taskAssignments = testAppContainer.taskAssignmentsRepository.get()
+            taskAssignments =
+                testAppContainer.taskAssignmentsRepository.get(TaskAssignmentFilter(onlyActiveAndPausedHouse = false))
 
             /*
              * Member M1 and M2 have 2 devices, M3 has 1 device

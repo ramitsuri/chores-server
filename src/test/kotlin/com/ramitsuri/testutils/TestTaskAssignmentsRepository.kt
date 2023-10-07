@@ -19,8 +19,14 @@ class TestTaskAssignmentsRepository(
         return size
     }
 
-    override suspend fun get(): List<TaskAssignment> {
+    fun get(): List<TaskAssignment> {
         return storage.values.toList()
+    }
+
+    override suspend fun getMostRecentForTask(taskId: String): TaskAssignment? {
+        return storage.values
+            .filter { it.task.id == taskId }
+            .maxByOrNull { it.dueDateTime }
     }
 
     override suspend fun get(filter: TaskAssignmentFilter): List<TaskAssignment> {

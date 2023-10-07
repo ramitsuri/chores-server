@@ -40,7 +40,6 @@ class TaskRepeater(
             tasksRepository.get(),
             membersRepository.get(),
             housesRepository.get(),
-            taskAssignmentsRepository.get(),
             runDateTime,
             zoneId
         )
@@ -56,7 +55,6 @@ class TaskRepeater(
         tasks: List<Task>,
         members: List<Member>,
         houses: List<House>,
-        taskAssignments: List<TaskAssignment>,
         runDateTime: ZonedDateTime,
         zoneId: ZoneId
     ): List<TaskAssignment> {
@@ -72,9 +70,7 @@ class TaskRepeater(
                     // Not adding assignments for houses that are no longer active or status is unknown
                     continue
                 }
-                val mostRecentAssignment = taskAssignments
-                    .filter { it.task.id == task.id }
-                    .maxByOrNull { it.dueDateTime }
+                val mostRecentAssignment = taskAssignmentsRepository.getMostRecentForTask(taskId = task.id)
                 val taskMember = members.firstOrNull { it.id == task.memberId }
                 val newAssignment = if (taskMember == null) {
                     null

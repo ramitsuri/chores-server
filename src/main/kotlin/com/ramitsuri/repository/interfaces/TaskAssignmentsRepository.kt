@@ -22,7 +22,7 @@ interface TaskAssignmentsRepository {
         requesterMemberId: String
     ): List<String>
 
-    suspend fun get(): List<TaskAssignment>
+    suspend fun getMostRecentForTask(taskId: String): TaskAssignment?
 
     suspend fun get(taskAssignmentIds: List<String>): List<TaskAssignment>
 
