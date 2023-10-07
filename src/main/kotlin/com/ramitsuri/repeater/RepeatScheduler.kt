@@ -74,6 +74,7 @@ class RepeatScheduler(
     }
 
     private suspend fun restartRunJob() {
+        log.info("Restart run job: cancelable: ${cancelable.get()}")
         withContext(Dispatchers.IO) {
             while (!cancelable.get()) {
                 log.info("Not cancelable. Will wait 1 second")
@@ -86,9 +87,12 @@ class RepeatScheduler(
                     val lastRunTime = runTimeLogRepository.get()?.toKotlinInstant() ?: INSTANT_MIN
                     val durationSinceLastRun = now - lastRunTime
                     if (durationSinceLastRun > config.repeatType.repeatDuration) {
+                        log.info("About to add via task repeater, setting cancelable false")
                         cancelable.set(false)
                         runTimeLogRepository.add(now.toJavaInstant())
+                        log.info("Update run time log repo")
                         taskRepeater.add(ZonedDateTime.ofInstant(now.toJavaInstant(), config.zoneId), config.zoneId)
+                        log.info("added via task repeater, setting cancelable true")
                         cancelable.set(true)
                         delay(config.repeatType.repeatDuration)
                     } else {
