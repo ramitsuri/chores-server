@@ -16,12 +16,12 @@ class PushMessageService(
 ) {
 
     private val relevantEvents =
-        listOf(Event.AssignmentsAdded::class, Event.AssignmentsAdded::class, Event.TaskEdited::class)
+        listOf(Event.AssignmentsAdded::class, Event.AssignmentsUpdated::class, Event.TaskEdited::class)
 
     init {
         coroutineScope.launch(ioDispatcher) {
             eventService.events.filter { it::class in relevantEvents }.collect { event ->
-                eventReceived(event)
+                launch { eventReceived(event) }
             }
         }
     }
