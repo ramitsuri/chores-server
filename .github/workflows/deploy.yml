@@ -18,9 +18,11 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Add google.json from secrets
+        env:
+          GOOGLE_JSON: ${{ secrets.GOOGLE_JSON }}
         run: |
           touch src/main/resources/google.json
-          echo "${{ secrets.GOOGLE_JSON }}" >> src/main/resources/google.json
+          echo "$GOOGLE_JSON" > src/main/resources/google.json
 
       - name: Add environment vars from secrets
         run: |
