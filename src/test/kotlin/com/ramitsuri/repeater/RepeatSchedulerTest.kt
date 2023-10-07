@@ -43,8 +43,8 @@ class RepeatSchedulerTest : BaseRepeaterTest() {
     }
 
     @Test
-    fun testScheduling_shouldRunAndDelayWithTenSeconds_ifRepeatTypeMinutes() = runBlocking {
-        setup()
+    fun testScheduling_shouldRunAndThenRerunAfterTenSeconds_ifRepeatTypeHourAndRestartEventPosted() = runBlocking {
+        setup(useMinuteScheduling = false)
 
         launch {
             delay(10.seconds)
@@ -53,11 +53,12 @@ class RepeatSchedulerTest : BaseRepeaterTest() {
         repeatScheduler.start()
     }
 
-    private fun CoroutineScope.setup() {
-        val config = RepeatSchedulerConfig(
-            SchedulerRepeatType.MINUTE,
-            zoneId
-        )
+    private fun CoroutineScope.setup(useMinuteScheduling: Boolean = true) {
+        val config = if (useMinuteScheduling) {
+            RepeatSchedulerConfig.ofOneMinute(zoneId)
+        } else {
+            RepeatSchedulerConfig.ofOneHour(zoneId)
+        }
         repeatScheduler = RepeatScheduler(
             config = config,
             taskRepeater = taskRepeater,

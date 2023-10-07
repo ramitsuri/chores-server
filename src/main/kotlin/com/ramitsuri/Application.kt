@@ -3,12 +3,12 @@ package com.ramitsuri
 import com.ramitsuri.di.AppContainer
 import com.ramitsuri.plugins.configureSecurity
 import com.ramitsuri.plugins.configureSerialization
-import io.ktor.server.application.*
-import io.ktor.server.routing.*
-import io.ktor.server.engine.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import io.ktor.server.application.Application
+import io.ktor.server.application.plugin
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.routing.HttpMethodRouteSelector
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.Routing
 
 fun main() {
     val appContainer = AppContainer()
@@ -22,9 +22,7 @@ fun main() {
     if (environment.addDummyData()) {
         appContainer.dummyDataProvider.setup()
     }
-    CoroutineScope(Dispatchers.IO).launch {
-        appContainer.getTaskScheduler().start()
-    }
+    appContainer.getTaskScheduler().start()
     embeddedServer(appContainer.getApplicationEngine(), port = 8081, configure = {
         connectionGroupSize = 2
         workerGroupSize = 5

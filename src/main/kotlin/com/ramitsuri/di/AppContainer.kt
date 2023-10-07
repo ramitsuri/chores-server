@@ -15,7 +15,6 @@ import com.ramitsuri.pushmessage.PushMessagePayloadGenerator
 import com.ramitsuri.pushmessage.PushMessageService
 import com.ramitsuri.repeater.RepeatScheduler
 import com.ramitsuri.repeater.RepeatSchedulerConfig
-import com.ramitsuri.repeater.SchedulerRepeatType
 import com.ramitsuri.repeater.TaskRepeater
 import com.ramitsuri.repository.access.SyncAccessController
 import com.ramitsuri.repository.access.TaskAssignmentAccessController
@@ -43,7 +42,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.datetime.Clock
-import java.time.ZoneId
 
 class AppContainer {
     val environment = EnvironmentRepository()
@@ -139,10 +137,7 @@ class AppContainer {
                 taskAssignmentsRepository,
                 Dispatchers.IO
             )
-        val config = RepeatSchedulerConfig(
-            repeatType = SchedulerRepeatType.HOUR,
-            zoneId = ZoneId.of("UTC")
-        )
+        val config = RepeatSchedulerConfig.ofOneHour()
         return RepeatScheduler(
             config = config,
             taskRepeater = repeater,
