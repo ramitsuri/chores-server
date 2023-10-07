@@ -1,5 +1,6 @@
 package com.ramitsuri.repeater
 
+import com.ramitsuri.events.Event
 import com.ramitsuri.events.SystemEventService
 import com.ramitsuri.testutils.TestRunTimeLogsRepository
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +18,7 @@ class RepeatSchedulerTest : BaseRepeaterTest() {
     private val dispatcher = Dispatchers.Default
 
     private lateinit var repeatScheduler: RepeatScheduler
+    private val eventService = SystemEventService()
 
     @Before
     fun setUp() {
@@ -46,7 +48,7 @@ class RepeatSchedulerTest : BaseRepeaterTest() {
 
         launch {
             delay(10.seconds)
-            repeatScheduler.start()
+            eventService.post(Event.TaskNeedsAssignments)
         }
         repeatScheduler.start()
     }
@@ -63,7 +65,7 @@ class RepeatSchedulerTest : BaseRepeaterTest() {
             clock = TestClock(Instant.parse("2023-01-01T12:00:00Z")),
             coroutineScope = this,
             ioDispatcher = dispatcher,
-            eventService = SystemEventService(),
+            eventService = eventService,
         )
     }
 }

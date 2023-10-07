@@ -24,7 +24,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andNot
 import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.batchInsert
+import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
@@ -42,18 +42,20 @@ class LocalTaskAssignmentsRepository(
     private val eventService: EventService
 ) : TaskAssignmentsRepository {
     override suspend fun add(taskAssignments: List<TaskAssignmentInsert>) {
-        val insertedIds = DatabaseFactory.query {
-            TaskAssignments.batchInsert(data = taskAssignments, shouldReturnGeneratedValues = true) { toInsert ->
-                this[TaskAssignments.statusType] = toInsert.progressStatus.key
-                this[TaskAssignments.statusDate] = instantConverter.toStorage(toInsert.progressStatusDateTime)
-                this[TaskAssignments.taskId] = uuidConverter.toStorage(toInsert.taskId)
-                this[TaskAssignments.memberId] = uuidConverter.toStorage(toInsert.memberId)
-                this[TaskAssignments.dueDate] = localDateTimeConverter.toStorage(toInsert.dueDateTime)
-                this[TaskAssignments.createdDate] = instantConverter.toStorage(toInsert.createdDateTime)
-                this[TaskAssignments.createType] = toInsert.createType.key
-                this[TaskAssignments.statusByMember] = null
-            }.map {
-                it[TaskAssignments.id].toString()
+        val insertedIds = mutableListOf<String>()
+        taskAssignments.forEach { toInsert ->
+            DatabaseFactory.query {
+                val id = TaskAssignments.insertAndGetId {
+                    it[TaskAssignments.statusType] = toInsert.progressStatus.key
+                    it[TaskAssignments.statusDate] = instantConverter.toStorage(toInsert.progressStatusDateTime)
+                    it[TaskAssignments.taskId] = uuidConverter.toStorage(toInsert.taskId)
+                    it[TaskAssignments.memberId] = uuidConverter.toStorage(toInsert.memberId)
+                    it[TaskAssignments.dueDate] = localDateTimeConverter.toStorage(toInsert.dueDateTime)
+                    it[TaskAssignments.createdDate] = instantConverter.toStorage(toInsert.createdDateTime)
+                    it[TaskAssignments.createType] = toInsert.createType.key
+                    it[TaskAssignments.statusByMember] = null
+                }.value
+                insertedIds.add(uuidConverter.toMain(id))
             }
         }
         eventService.post(Event.AssignmentsAdded(insertedIds))
@@ -108,7 +110,10 @@ class LocalTaskAssignmentsRepository(
         return rowValues.toAssignments()
     }
 
-    override suspend fun editOwn(taskAssignments: List<TaskAssignmentDto>, requesterMemberId: String): List<String> {
+    override suspend fun editOwn(
+        taskAssignments: List<TaskAssignmentDto>,
+        requesterMemberId: String
+    ): List<String> {
         val updatedIds = mutableListOf<String>()
         DatabaseFactory.query {
             taskAssignments.forEach { taskAssignmentDto ->

@@ -11,6 +11,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -38,7 +40,7 @@ class RepeatScheduler(
 
     private val running = AtomicBoolean(false)
     private val restartRequestInProgress = AtomicBoolean(false)
-    private val cancelable = AtomicBoolean(true)
+    private val cancelable = Mutex()
 
     private var runningJob: Job? = null
 
@@ -74,9 +76,9 @@ class RepeatScheduler(
     }
 
     private suspend fun restartRunJob() {
-        log.info("Restart run job: cancelable: ${cancelable.get()}")
+        log.info("Restart run job - cancelable: ${!cancelable.isLocked}")
         withContext(Dispatchers.IO) {
-            while (!cancelable.get()) {
+            while (cancelable.isLocked) {
                 log.info("Not cancelable. Will wait 1 second")
                 delay(1.seconds)
             }
@@ -88,12 +90,12 @@ class RepeatScheduler(
                     val durationSinceLastRun = now - lastRunTime
                     if (durationSinceLastRun > config.repeatType.repeatDuration) {
                         log.info("About to add via task repeater, setting cancelable false")
-                        cancelable.set(false)
-                        runTimeLogRepository.add(now.toJavaInstant())
-                        log.info("Update run time log repo")
-                        taskRepeater.add(ZonedDateTime.ofInstant(now.toJavaInstant(), config.zoneId), config.zoneId)
-                        log.info("added via task repeater, setting cancelable true")
-                        cancelable.set(true)
+                        cancelable.withLock {
+                            runTimeLogRepository.add(now.toJavaInstant())
+                            log.info("Update run time log repo")
+                            taskRepeater.add(ZonedDateTime.ofInstant(now.toJavaInstant(), config.zoneId), config.zoneId)
+                            log.info("added via task repeater, setting cancelable true")
+                        }
                         delay(config.repeatType.repeatDuration)
                     } else {
                         delay(config.repeatType.repeatDuration.minus(durationSinceLastRun))

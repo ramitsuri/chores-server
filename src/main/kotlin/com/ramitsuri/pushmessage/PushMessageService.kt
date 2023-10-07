@@ -4,6 +4,7 @@ import com.ramitsuri.events.Event
 import com.ramitsuri.events.EventService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
 class PushMessageService(
@@ -14,9 +15,12 @@ class PushMessageService(
     eventService: EventService,
 ) {
 
+    private val relevantEvents =
+        listOf(Event.AssignmentsAdded::class, Event.AssignmentsAdded::class, Event.TaskEdited::class)
+
     init {
         coroutineScope.launch(ioDispatcher) {
-            eventService.events.collect { event ->
+            eventService.events.filter { it::class in relevantEvents }.collect { event ->
                 eventReceived(event)
             }
         }

@@ -14,6 +14,7 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 import java.time.Instant
 import java.time.LocalDateTime
+import java.util.UUID
 
 class LocalTaskAssignmentsRepositoryTest : BaseNeedsDatabaseTest() {
     private var dueDateTime = LocalDateTime.parse("2023-09-20T12:00:00")
@@ -31,6 +32,64 @@ class LocalTaskAssignmentsRepositoryTest : BaseNeedsDatabaseTest() {
 
         val taskT2 = testAppContainer.tasksRepository.get().first { it.name == "T2" }
         assertNull(testAppContainer.taskAssignmentsRepository.getMostRecentForTask(taskT2.id))
+    }
+
+    @Test
+    fun testAddReturnsInsertedIds() = runTest {
+        setup()
+
+        // Should manually check for example with event service that ids are being returned
+        val taskT1 = testAppContainer.tasksRepository.get().first { it.name == "T1" }
+
+        repository.add(
+            listOf(
+                TaskAssignmentInsert(
+                    progressStatus = ProgressStatus.TODO,
+                    progressStatusDateTime = Instant.parse("2023-09-30T12:00:00Z"),
+                    taskId = taskT1.id,
+                    memberId = UUID.randomUUID().toString(),
+                    dueDateTime = dueDateTime,
+                    createdDateTime = Instant.parse("2023-09-30T12:00:00Z"),
+                    createType = CreateType.AUTO
+                ),
+                TaskAssignmentInsert(
+                    progressStatus = ProgressStatus.TODO,
+                    progressStatusDateTime = Instant.parse("2023-09-30T12:00:00Z"),
+                    taskId = taskT1.id,
+                    memberId = UUID.randomUUID().toString(),
+                    dueDateTime = dueDateTime,
+                    createdDateTime = Instant.parse("2023-09-30T12:00:00Z"),
+                    createType = CreateType.AUTO
+                ),
+                TaskAssignmentInsert(
+                    progressStatus = ProgressStatus.TODO,
+                    progressStatusDateTime = Instant.parse("2023-09-30T12:00:00Z"),
+                    taskId = taskT1.id,
+                    memberId = UUID.randomUUID().toString(),
+                    dueDateTime = dueDateTime,
+                    createdDateTime = Instant.parse("2023-09-30T12:00:00Z"),
+                    createType = CreateType.AUTO
+                ),
+                TaskAssignmentInsert(
+                    progressStatus = ProgressStatus.TODO,
+                    progressStatusDateTime = Instant.parse("2023-09-30T12:00:00Z"),
+                    taskId = taskT1.id,
+                    memberId = UUID.randomUUID().toString(),
+                    dueDateTime = dueDateTime,
+                    createdDateTime = Instant.parse("2023-09-30T12:00:00Z"),
+                    createType = CreateType.AUTO
+                ),
+                TaskAssignmentInsert(
+                    progressStatus = ProgressStatus.TODO,
+                    progressStatusDateTime = Instant.parse("2023-09-30T12:00:00Z"),
+                    taskId = taskT1.id,
+                    memberId = UUID.randomUUID().toString(),
+                    dueDateTime = dueDateTime,
+                    createdDateTime = Instant.parse("2023-09-30T12:00:00Z"),
+                    createType = CreateType.AUTO
+                )
+            )
+        )
     }
 
     private fun setup() {

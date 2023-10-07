@@ -22,7 +22,7 @@ fun main() {
     if (environment.addDummyData()) {
         appContainer.dummyDataProvider.setup()
     }
-    CoroutineScope(Dispatchers.Default).launch {
+    CoroutineScope(Dispatchers.IO).launch {
         appContainer.getTaskScheduler().start()
     }
     embeddedServer(appContainer.getApplicationEngine(), port = 8081, configure = {

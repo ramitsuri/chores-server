@@ -53,7 +53,6 @@ class AppContainer {
 
     private val eventService: EventService = SystemEventService()
 
-    private val ioDispatcher = Dispatchers.IO
     private val coroutineScope = CoroutineScope(SupervisorJob())
 
     private val housesRepository = LocalHousesRepository(uuidConverter, instantConverter)
@@ -106,7 +105,7 @@ class AppContainer {
             pushMessageDispatcher = pushMessageDispatcher,
             pushMessagePayloadGenerator = pushMessagePayloadGenerator,
             coroutineScope = coroutineScope,
-            ioDispatcher = ioDispatcher,
+            ioDispatcher = Dispatchers.IO,
             eventService = eventService
         )
     }
@@ -138,7 +137,7 @@ class AppContainer {
                 housesRepository,
                 memberAssignmentsRepository,
                 taskAssignmentsRepository,
-                Dispatchers.Default
+                Dispatchers.IO
             )
         val config = RepeatSchedulerConfig(
             repeatType = SchedulerRepeatType.HOUR,
@@ -150,7 +149,7 @@ class AppContainer {
             runTimeLogRepository = LocalRunTimeLogsRepository(instantConverter),
             clock = Clock.System,
             coroutineScope = coroutineScope,
-            ioDispatcher = ioDispatcher,
+            ioDispatcher = Dispatchers.IO,
             eventService = eventService
         )
     }
