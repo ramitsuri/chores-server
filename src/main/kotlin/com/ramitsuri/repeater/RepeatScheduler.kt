@@ -13,6 +13,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toJavaInstant
 import kotlinx.datetime.toKotlinInstant
+import java.lang.Exception
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.concurrent.atomic.AtomicBoolean
@@ -62,12 +63,16 @@ class RepeatScheduler(
             return
         }
         while (true) {
-            val now = clock.now()
-            val lastRunTime = runTimeLogRepository.get()?.toKotlinInstant() ?: INSTANT_MIN
-            val durationSinceLastRun = now - lastRunTime
-            if (durationSinceLastRun > config.repeatDuration) {
-                taskRepeater.add(ZonedDateTime.ofInstant(now.toJavaInstant(), config.zoneId), config.zoneId)
-                runTimeLogRepository.add(now.toJavaInstant())
+            try {
+                val now = clock.now()
+                val lastRunTime = runTimeLogRepository.get()?.toKotlinInstant() ?: INSTANT_MIN
+                val durationSinceLastRun = now - lastRunTime
+                if (durationSinceLastRun > config.repeatDuration) {
+                    taskRepeater.add(ZonedDateTime.ofInstant(now.toJavaInstant(), config.zoneId), config.zoneId)
+                    runTimeLogRepository.add(now.toJavaInstant())
+                }
+            } catch (e: Exception) {
+                log.severe("Run failed: ${e.message}")
             }
             delay(1.minutes)
         }
