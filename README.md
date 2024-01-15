@@ -46,3 +46,15 @@ java -jar choresserver-<version>-all.jar
 - Create Secrets for Project Id and JSON key that was downloaded earlier
 - Paste the contents of the json file as value for the secret
 - If gradle permission issue, run `git update-index --chmod=+x gradlew`
+
+## GH Actions deploy fails
+If error message on GH Action logs is 
+```
+Execution failed for task ':appengineDeploy'.
+> com.google.cloud.tools.appengine.AppEngineException: com.google.cloud.tools.appengine.operations.cloudsdk.process.ProcessHandlerException: com.google.cloud.tools.appengine.AppEngineException: Non zero exit: 1
+```
+And in gCloud build logs, build step is failing with 
+```
+ERROR: failed to initialize analyzer: getting previous image: getting config file for image "us.gcr.io/chores-326817/app-engine-tmp/app/default/ttl-18h:latest
+```
+Then fix is to go to https://console.cloud.google.com/gcr, delete previous images and then rebuild on gCloud console and then retrigger the GH action that failed. 
