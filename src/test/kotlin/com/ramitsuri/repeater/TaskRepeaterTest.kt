@@ -712,6 +712,143 @@ class TaskRepeaterTest : BaseRepeaterTest() {
         }
     }
 
+    @Test
+    fun testStart_shouldAddAssignmentNextMonth_whenRepeatUnitIsMonth() {
+        val taskDueDateTime = LocalDateTime.parse("2021-01-15T10:00")
+        runBlocking {
+            // Arrange
+            addBasic()
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "MonthlyTask",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                repeatUnit = RepeatUnit.MONTH,
+                memberId = member1.id,
+                rotateMember = false
+            )
+            val taskId = tasksRepository.get()[0].id
+            addAssignment(
+                dueDate = taskDueDateTime,
+                createdDate = baseInstant,
+                taskId = taskId,
+                memberId = member1.id
+            )
+
+            // Act
+            val runTime = LocalDateTime.parse("2021-02-15T10:00").atZone(zoneId)
+            taskRepeater.add(runTime, zoneId)
+
+            // Assert
+            val assignments = taskAssignmentsRepository.get()
+            assertEquals(2, assignments.size)
+            assertEquals(LocalDateTime.parse("2021-02-15T10:00"), assignments[1].dueDateTime)
+        }
+    }
+
+    @Test
+    fun testStart_shouldClampToLastDayOfMonth_whenRepeatMonthHasFewerDays() {
+        val taskDueDateTime = LocalDateTime.parse("2021-01-31T10:00")
+        runBlocking {
+            // Arrange
+            addBasic()
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "MonthlyTask31st",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                repeatUnit = RepeatUnit.MONTH,
+                memberId = member1.id,
+                rotateMember = false
+            )
+            val taskId = tasksRepository.get()[0].id
+            addAssignment(
+                dueDate = taskDueDateTime,
+                createdDate = baseInstant,
+                taskId = taskId,
+                memberId = member1.id
+            )
+
+            // Act: In Feb (non-leap year 2021), Feb has 28 days
+            val runTime = LocalDateTime.parse("2021-02-28T10:00").atZone(zoneId)
+            taskRepeater.add(runTime, zoneId)
+
+            // Assert: Clamped to Feb 28
+            val assignments = taskAssignmentsRepository.get()
+            assertEquals(2, assignments.size)
+            assertEquals(LocalDateTime.parse("2021-02-28T10:00"), assignments[1].dueDateTime)
+        }
+    }
+
+    @Test
+    fun testStart_shouldRecoverOriginalDayOfMonth_afterClampedMonth() {
+        val taskDueDateTime = LocalDateTime.parse("2021-01-31T10:00")
+        runBlocking {
+            // Arrange
+            addBasic()
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "MonthlyTask31st",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                repeatUnit = RepeatUnit.MONTH,
+                memberId = member1.id,
+                rotateMember = false
+            )
+            val taskId = tasksRepository.get()[0].id
+            // Previous assignment was in Feb (clamped to 28th)
+            addAssignment(
+                dueDate = LocalDateTime.parse("2021-02-28T10:00"),
+                createdDate = baseInstant,
+                taskId = taskId,
+                memberId = member1.id
+            )
+
+            // Act: Running in March (which has 31 days)
+            val runTime = LocalDateTime.parse("2021-03-31T10:00").atZone(zoneId)
+            taskRepeater.add(runTime, zoneId)
+
+            // Assert: Recovered original day of month (31st)
+            val assignments = taskAssignmentsRepository.get()
+            assertEquals(2, assignments.size)
+            assertEquals(LocalDateTime.parse("2021-03-31T10:00"), assignments[1].dueDateTime)
+        }
+    }
+
+    @Test
+    fun testStart_shouldHandleLeapYear_whenRepeatMonthIsFebruary() {
+        val taskDueDateTime = LocalDateTime.parse("2024-01-31T10:00")
+        runBlocking {
+            // Arrange
+            addBasic()
+            val member1 = membersRepository.get()[0]
+            addTask(
+                name = "MonthlyTaskLeapYear",
+                dueDateTime = taskDueDateTime,
+                repeatValue = 1,
+                repeatUnit = RepeatUnit.MONTH,
+                memberId = member1.id,
+                rotateMember = false
+            )
+            val taskId = tasksRepository.get()[0].id
+            addAssignment(
+                dueDate = taskDueDateTime,
+                createdDate = baseInstant,
+                taskId = taskId,
+                memberId = member1.id
+            )
+
+            // Act: Running in Feb of leap year 2024 (29 days)
+            val runTime = LocalDateTime.parse("2024-02-29T10:00").atZone(zoneId)
+            taskRepeater.add(runTime, zoneId)
+
+            // Assert: Clamped to Feb 29 for leap year
+            val assignments = taskAssignmentsRepository.get()
+            assertEquals(2, assignments.size)
+            assertEquals(LocalDateTime.parse("2024-02-29T10:00"), assignments[1].dueDateTime)
+        }
+    }
+
     private suspend fun addMember(name: String) {
         membersRepository.add(name, Instant.now())
     }

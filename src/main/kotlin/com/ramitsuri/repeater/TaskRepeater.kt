@@ -132,9 +132,13 @@ class TaskRepeater(
     ): TaskAssignment? {
         val mostRecentDueDateTime = mostRecentAssignment.dueDateTime
         val mostRecentMemberId = mostRecentAssignment.member.id
-        val newAssignmentDueDateTime =
-            getNewAssignmentDueDateTime(task.repeatValue, task.repeatUnit, mostRecentDueDateTime, runDateTime)
-                ?: return null
+        val newAssignmentDueDateTime = getNewAssignmentDueDateTime(
+            repeatValue = task.repeatValue,
+            repeatUnit = task.repeatUnit,
+            mostRecentDueDateTime = mostRecentDueDateTime,
+            taskDueDateTime = task.dueDateTime,
+            runDateTime = runDateTime,
+        ) ?: return null
 
         if (!canAddNewAssignment(
                 task,
@@ -177,7 +181,8 @@ class TaskRepeater(
         repeatValue: Int,
         repeatUnit: RepeatUnit,
         mostRecentDueDateTime: LocalDateTime,
-        runDateTime: ZonedDateTime
+        taskDueDateTime: LocalDateTime,
+        runDateTime: ZonedDateTime,
     ): LocalDateTime? {
         val repeatLong = repeatValue.toLong()
         return when (repeatUnit) {
@@ -194,7 +199,11 @@ class TaskRepeater(
             }
 
             RepeatUnit.MONTH -> {
-                mostRecentDueDateTime.plusMonths(repeatLong)
+                addMonths(
+                    months = repeatLong,
+                    mostRecentDueDateTime = mostRecentDueDateTime,
+                    taskDueDateTime = taskDueDateTime
+                )
             }
 
             RepeatUnit.YEAR -> {
@@ -209,6 +218,24 @@ class TaskRepeater(
                 null
             }
         }
+    }
+
+    /*
+     * This is to avoid the situation where original intention was to repeat on 30th of every month. But then, you hit
+     * February which only has 28 days (or 29 if leap year) then new due date time becomes 28th (or 29th) going forward
+     * because that's what you get using java.time.LocalDateTime.plusMonths. So this adjusts for that by looking at the
+     * original day of month of task dueDateTime and using that if possible for creating assignments (wherever permitted
+     * by the max number of days in the month).
+     */
+    private fun addMonths(
+        months: Long,
+        mostRecentDueDateTime: LocalDateTime,
+        taskDueDateTime: LocalDateTime,
+    ): LocalDateTime {
+        val potentialDueDateTime = mostRecentDueDateTime.plusMonths(months)
+        val maxDaysInMonth = potentialDueDateTime.toLocalDate().lengthOfMonth()
+        val dayOfMonth = taskDueDateTime.dayOfMonth.coerceAtMost(maxDaysInMonth)
+        return potentialDueDateTime.withDayOfMonth(dayOfMonth)
     }
 
     private suspend fun getNewAssignmentMemberId(houseId: String, mostRecentAssignmentMemberId: String): Member {
