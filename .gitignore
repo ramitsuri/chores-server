@@ -146,3 +146,5 @@ build/
 
 # Firebase Service Account json
 src/main/resources/google.json
+
+local.properties
