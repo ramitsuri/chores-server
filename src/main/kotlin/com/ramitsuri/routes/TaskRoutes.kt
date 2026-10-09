@@ -2,13 +2,14 @@ package com.ramitsuri.routes
 
 import com.ramitsuri.data.LocalDateTimeConverter
 import com.ramitsuri.extensions.Loggable
+import com.ramitsuri.models.AccessResult
 import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.Error
 import com.ramitsuri.models.ErrorCode
 import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.models.TaskDto
-import com.ramitsuri.repository.interfaces.TasksRepository
-import com.ramitsuri.repository.interfaces.TasksTaskAssignmentsRepository
+import com.ramitsuri.plugins.getMemberId
+import com.ramitsuri.repository.access.TaskAccessController
 import io.ktor.server.application.call
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -21,8 +22,7 @@ import io.ktor.server.routing.put
 import java.time.Instant
 
 class TaskRoutes(
-    private val tasksRepository: TasksRepository,
-    private val tasksTaskAssignmentsRepository: TasksTaskAssignmentsRepository,
+    private val taskAccessController: TaskAccessController,
     private val localDateTimeConverter: LocalDateTimeConverter
 ) : Routes(), Loggable {
     override val log = logger()
@@ -32,31 +32,57 @@ class TaskRoutes(
     override val routes: Route.() -> Unit = {
         // Get all
         get {
-            call.respond(tasksRepository.get())
+            val requesterMemberId = this.context.getMemberId() ?: return@get call.respond(
+                invalidTokenError.first,
+                invalidTokenError.second
+            )
+            when (val accessResult = taskAccessController.get(requesterMemberId)) {
+                is AccessResult.Success -> {
+                    call.respond(accessResult.data)
+                }
+                is AccessResult.Failure -> {
+                    call.respond(HttpStatusCode.Unauthorized, "Not sufficient access")
+                }
+            }
         }
 
         // Get by ID
         get("{id}") {
+            val requesterMemberId = this.context.getMemberId() ?: return@get call.respond(
+                invalidTokenError.first,
+                invalidTokenError.second
+            )
             val id = call.parameters["id"] ?: return@get call.respond(
                 invalidIdParamError.first,
                 invalidIdParamError.second
             )
-            val task = tasksRepository.get(id)
-            if (task != null) {
-                call.respond(task)
-            } else {
-                call.respond(
-                    HttpStatusCode.NotFound,
-                    Error(
-                        ErrorCode.NOT_FOUND,
-                        "Task not found"
-                    )
-                )
+            when (val accessResult = taskAccessController.get(requesterMemberId, id)) {
+                is AccessResult.Success -> {
+                    val task = accessResult.data
+                    if (task != null) {
+                        call.respond(task)
+                    } else {
+                        call.respond(
+                            HttpStatusCode.NotFound,
+                            Error(
+                                ErrorCode.NOT_FOUND,
+                                "Task not found"
+                            )
+                        )
+                    }
+                }
+                is AccessResult.Failure -> {
+                    call.respond(HttpStatusCode.Unauthorized, "Not sufficient access")
+                }
             }
         }
 
         // Add
         post {
+            val requesterMemberId = this.context.getMemberId() ?: return@post call.respond(
+                invalidTokenError.first,
+                invalidTokenError.second
+            )
             val taskDto = call.receive<TaskDto>()
             val name = taskDto.name
             val description = taskDto.description
@@ -73,33 +99,41 @@ class TaskRoutes(
             val memberId = taskDto.memberId
             val rotateMember = taskDto.rotateMember ?: false
             if (name != null && description != null && houseId != null && dueDateTime != null && memberId != null) {
-                val createdTask =
-                    tasksRepository.add(
-                        name,
-                        description,
-                        dueDateTime,
-                        repeatValue,
-                        repeatUnit,
-                        repeatEndDateTime,
-                        houseId,
-                        memberId,
-                        rotateMember,
-                        Instant.now(),
-                        status = ActiveStatus.ACTIVE // Adding new tasks with Active status as default for now
-                    )
-                if (createdTask != null) {
-                    call.respond(
-                        HttpStatusCode.Created,
-                        createdTask
-                    )
-                } else {
-                    call.respond(
-                        HttpStatusCode.InternalServerError,
-                        Error(
-                            ErrorCode.INTERNAL_ERROR,
-                            "Error creating task"
-                        )
-                    )
+                val accessResult = taskAccessController.add(
+                    requesterMemberId,
+                    name,
+                    description,
+                    dueDateTime,
+                    repeatValue,
+                    repeatUnit,
+                    repeatEndDateTime,
+                    houseId,
+                    memberId,
+                    rotateMember,
+                    Instant.now(),
+                    status = ActiveStatus.ACTIVE // Adding new tasks with Active status as default for now
+                )
+                when (accessResult) {
+                    is AccessResult.Success -> {
+                        val createdTask = accessResult.data
+                        if (createdTask != null) {
+                            call.respond(
+                                HttpStatusCode.Created,
+                                createdTask
+                            )
+                        } else {
+                            call.respond(
+                                HttpStatusCode.InternalServerError,
+                                Error(
+                                    ErrorCode.INTERNAL_ERROR,
+                                    "Error creating task"
+                                )
+                            )
+                        }
+                    }
+                    is AccessResult.Failure -> {
+                        call.respond(HttpStatusCode.Unauthorized, "Not sufficient access")
+                    }
                 }
             } else {
                 return@post call.respond(
@@ -114,25 +148,46 @@ class TaskRoutes(
 
         // Delete by Id
         delete("{id}") {
+            val requesterMemberId = this.context.getMemberId() ?: return@delete call.respond(
+                invalidTokenError.first,
+                invalidTokenError.second
+            )
             val taskId = call.parameters["id"] ?: return@delete call.respond(
                 invalidIdParamError.first,
                 invalidIdParamError.second
             )
-            val result = tasksTaskAssignmentsRepository.delete(taskId)
-            if (result) {
-                call.respond(HttpStatusCode.OK)
-            } else {
-                call.respond(HttpStatusCode.NotFound)
+            when (val accessResult = taskAccessController.delete(requesterMemberId, taskId)) {
+                is AccessResult.Success -> {
+                    if (accessResult.data) {
+                        call.respond(HttpStatusCode.OK)
+                    } else {
+                        call.respond(HttpStatusCode.NotFound)
+                    }
+                }
+                is AccessResult.Failure -> {
+                    call.respond(HttpStatusCode.Unauthorized, "Not sufficient access")
+                }
             }
         }
 
         // Edit
         put("{id}") {
+            val requesterMemberId = this.context.getMemberId() ?: return@put call.respond(
+                invalidTokenError.first,
+                invalidTokenError.second
+            )
             val taskId = call.parameters["id"] ?: return@put call.respond(
                 invalidIdParamError.first,
                 invalidIdParamError.second
             )
-            val existingTask = tasksRepository.get(taskId) ?: return@put call.respond(HttpStatusCode.NotFound)
+            val existingTask = when (val accessResult = taskAccessController.get(requesterMemberId, taskId)) {
+                is AccessResult.Success -> {
+                    accessResult.data ?: return@put call.respond(HttpStatusCode.NotFound)
+                }
+                is AccessResult.Failure -> {
+                    return@put call.respond(HttpStatusCode.Unauthorized, "Not sufficient access")
+                }
+            }
             val taskDto = call.receive<TaskDto>()
 
             var shouldDeleteTaskAssignments = false
@@ -180,36 +235,30 @@ class TaskRoutes(
                 existingTask.status
             }
 
-            val result = if (shouldDeleteTaskAssignments) {
-                tasksTaskAssignmentsRepository.edit(
-                    taskId,
-                    name,
-                    description,
-                    dueDateTime,
-                    repeatValue,
-                    repeatUnit,
-                    repeatEndDateTime,
-                    rotateMember,
-                    status
-                )
-            } else {
-                tasksRepository.edit(
-                    taskId,
-                    name,
-                    description,
-                    dueDateTime,
-                    repeatValue,
-                    repeatUnit,
-                    repeatEndDateTime,
-                    rotateMember,
-                    status
-                )
-            }
-
-            if (result) {
-                call.respond(HttpStatusCode.OK)
-            } else {
-                call.respond(HttpStatusCode.NotFound)
+            val accessResult = taskAccessController.edit(
+                requesterMemberId,
+                taskId,
+                name,
+                description,
+                dueDateTime,
+                repeatValue,
+                repeatUnit,
+                repeatEndDateTime,
+                rotateMember,
+                status,
+                shouldDeleteTaskAssignments
+            )
+            when (accessResult) {
+                is AccessResult.Success -> {
+                    if (accessResult.data) {
+                        call.respond(HttpStatusCode.OK)
+                    } else {
+                        call.respond(HttpStatusCode.NotFound)
+                    }
+                }
+                is AccessResult.Failure -> {
+                    call.respond(HttpStatusCode.Unauthorized, "Not sufficient access")
+                }
             }
         }
     }

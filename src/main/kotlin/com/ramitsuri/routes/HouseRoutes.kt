@@ -12,6 +12,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.time.Instant
 
+// Not used by mobile app, no need for access control yet
 class HouseRoutes(private val housesRepository: HousesRepository) : Routes() {
 
     override val path = "/houses"

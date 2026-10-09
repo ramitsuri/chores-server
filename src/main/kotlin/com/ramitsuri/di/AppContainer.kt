@@ -17,6 +17,7 @@ import com.ramitsuri.repeater.RepeatScheduler
 import com.ramitsuri.repeater.RepeatSchedulerConfig
 import com.ramitsuri.repeater.TaskRepeater
 import com.ramitsuri.repository.access.SyncAccessController
+import com.ramitsuri.repository.access.TaskAccessController
 import com.ramitsuri.repository.access.TaskAssignmentAccessController
 import com.ramitsuri.repository.local.LocalHousesRepository
 import com.ramitsuri.repository.local.LocalMemberAssignmentsRepository
@@ -77,6 +78,13 @@ class AppContainer {
         )
     private val taskAssignmentsAccessController =
         TaskAssignmentAccessController(memberAssignmentsRepository, taskAssignmentsRepository, membersRepository)
+    private val taskAccessController =
+        TaskAccessController(
+            memberAssignmentsRepository,
+            tasksRepository,
+            tasksTaskAssignmentsRepository,
+            membersRepository
+        )
     private val syncRepository = LocalSyncRepository(memberAssignmentsRepository, housesRepository)
     private val syncAccessController = SyncAccessController(syncRepository, membersRepository)
     private val pushMessageTokenRepository = LocalPushMessageTokenRepository(uuidConverter, instantConverter)
@@ -114,7 +122,7 @@ class AppContainer {
         return listOf(
             HouseRoutes(housesRepository),
             MemberRoutes(membersRepository),
-            TaskRoutes(tasksRepository, tasksTaskAssignmentsRepository, localDateTimeConverter),
+            TaskRoutes(taskAccessController, localDateTimeConverter),
             TaskAssignmentRoutes(taskAssignmentsAccessController),
             MemberAssignmentRoutes(memberAssignmentsRepository),
             LoginRoutes(jwtService, membersRepository),

@@ -148,3 +148,5 @@ build/
 src/main/resources/google.json
 
 local.properties
+
+.kotlin

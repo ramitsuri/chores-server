@@ -10,6 +10,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
+// Used by mobile app but doesn't need access control
 class LoginRoutes(
     jwtService: JwtService,
     membersRepository: MembersRepository

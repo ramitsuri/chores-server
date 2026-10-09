@@ -10,6 +10,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
+// Not used by mobile app, no need for access control yet
 class MemberAssignmentRoutes(private val memberAssignmentsRepository: MemberAssignmentsRepository) : Routes() {
 
     override val path = "/member-assignments"
