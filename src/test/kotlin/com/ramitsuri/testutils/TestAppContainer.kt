@@ -11,6 +11,7 @@ import com.ramitsuri.repository.local.LocalPushMessageTokenRepository
 import com.ramitsuri.repository.local.LocalTaskAssignmentsRepository
 import com.ramitsuri.repository.local.LocalTasksRepository
 import com.ramitsuri.repository.local.LocalTasksTaskAssignmentsRepository
+import kotlin.time.Clock
 
 class TestAppContainer {
     val uuidConverter = UuidConverter()
@@ -31,7 +32,8 @@ class TestAppContainer {
             instantConverter,
             localDateTimeConverter,
             uuidConverter,
-            eventService
+            eventService,
+            clock = Clock.System,
         )
     val tasksTaskAssignmentsRepository =
         LocalTasksTaskAssignmentsRepository(localDateTimeConverter, uuidConverter, eventService)

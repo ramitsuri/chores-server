@@ -42,7 +42,7 @@ import io.ktor.server.netty.Netty
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 class AppContainer {
     val environment = EnvironmentRepository()
@@ -67,6 +67,7 @@ class AppContainer {
             localDateTimeConverter,
             uuidConverter,
             eventService,
+            clock = Clock.System,
         )
     private val tasksTaskAssignmentsRepository =
         LocalTasksTaskAssignmentsRepository(localDateTimeConverter, uuidConverter, eventService)

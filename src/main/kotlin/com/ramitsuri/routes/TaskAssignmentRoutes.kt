@@ -35,11 +35,13 @@ class TaskAssignmentRoutes(
             } catch (e: Exception) {
                 emptyList()
             }
+            val dueDateWithinDays = call.request.queryParameters["duedatewithindays"]?.toIntOrNull()
             val filter = TaskAssignmentFilter(
                 memberId = memberId,
                 notMemberId = notMemberId,
                 progressStatuses = progressStatuses,
-                onlyActiveAndPausedHouse = true // Defaulting to true for now
+                onlyActiveAndPausedHouse = true, // Defaulting to true for now
+                dueDateWithinDays = dueDateWithinDays,
             )
             when (val accessResult = taskAssignmentsAccessController.get(requesterMemberId, filter)) {
                 is AccessResult.Success -> {

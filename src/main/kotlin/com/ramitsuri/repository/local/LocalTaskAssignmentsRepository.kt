@@ -34,6 +34,8 @@ import org.jetbrains.exposed.v1.jdbc.update
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.UUID
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 
 class LocalTaskAssignmentsRepository(
     private val tasksRepository: TasksRepository,
@@ -42,7 +44,8 @@ class LocalTaskAssignmentsRepository(
     private val instantConverter: Converter<Instant, String>,
     private val localDateTimeConverter: Converter<LocalDateTime, String>,
     private val uuidConverter: Converter<String, UUID>,
-    private val eventService: EventService
+    private val eventService: EventService,
+    private val clock: Clock,
 ) : TaskAssignmentsRepository {
     override suspend fun add(taskAssignments: List<TaskAssignmentInsert>) {
         val insertedIds = mutableListOf<String>()
@@ -191,6 +194,13 @@ class LocalTaskAssignmentsRepository(
                 val condition = TaskAssignments.statusType inList filter.usableProgressStatuses.map { it.key }
                 query = query.andWhere { condition }
             }
+            if (filter.dueDateWithinDays != null) {
+                val minDueDate = clock.now().minus(filter.dueDateWithinDays.days)
+                    .toLocalDateTime(TimeZone.UTC)
+                    .toJavaLocalDateTime()
+                val condition = TaskAssignments.dueDate greater localDateTimeConverter.toStorage(minDueDate)
+                query = query.andWhere { condition }
+            }
             query.filterNotNull().map { row ->
                 rowToTaskAssignmentRawValues(row)
             }
@@ -223,6 +233,13 @@ class LocalTaskAssignmentsRepository(
             }
             if (filter.usableProgressStatuses.isNotEmpty()) {
                 val condition = TaskAssignments.statusType inList filter.usableProgressStatuses.map { it.key }
+                query = query.andWhere { condition }
+            }
+            if (filter.dueDateWithinDays != null) {
+                val minDueDate = clock.now().minus(filter.dueDateWithinDays.days)
+                    .toLocalDateTime(TimeZone.UTC)
+                    .toJavaLocalDateTime()
+                val condition = TaskAssignments.dueDate greater localDateTimeConverter.toStorage(minDueDate)
                 query = query.andWhere { condition }
             }
             // Filter assignments whose tasks belong to the houses provided

@@ -36,7 +36,8 @@ data class TaskAssignmentFilter(
     val memberId: String? = null,
     val notMemberId: String? = null,
     private val progressStatuses: List<ProgressStatus> = emptyList(),
-    val onlyActiveAndPausedHouse: Boolean
+    val onlyActiveAndPausedHouse: Boolean,
+    val dueDateWithinDays: Int? = null,
 ) {
     val usableProgressStatuses = progressStatuses.filter { it != ProgressStatus.UNKNOWN }
 }
