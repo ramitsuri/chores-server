@@ -28,17 +28,18 @@ class TaskAssignmentRoutes(
             )
             val memberId = call.request.queryParameters["member"]
             val notMemberId = call.request.queryParameters["notmember"]
-            val progressStatus = try {
-                ProgressStatus.fromKey(
-                    call.request.queryParameters["progress"]?.toInt() ?: ProgressStatus.UNKNOWN.key
-                )
+            val progressStatuses = try {
+                call.request.queryParameters.getAll("progress").orEmpty()
+                    .map { rawProgressStatus ->
+                        ProgressStatus.fromKey(rawProgressStatus.toInt())
+                    }
             } catch (e: Exception) {
-                ProgressStatus.UNKNOWN
+                emptyList()
             }
             val filter = TaskAssignmentFilter(
                 memberId = memberId,
                 notMemberId = notMemberId,
-                progressStatus = progressStatus,
+                progressStatuses = progressStatuses,
                 onlyActiveAndPausedHouse = true // Defaulting to true for now
             )
             when (val accessResult = taskAssignmentsAccessController.get(requesterMemberId, filter)) {

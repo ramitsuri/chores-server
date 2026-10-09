@@ -184,8 +184,8 @@ class LocalTaskAssignmentsRepository(
                 val condition = TaskAssignments.memberId neq uuidConverter.toStorage(filter.notMemberId)
                 query = query.andWhere { condition }
             }
-            if (filter.progressStatus != ProgressStatus.UNKNOWN) {
-                val condition = TaskAssignments.statusType eq filter.progressStatus.key
+            if (filter.usableProgressStatuses.isNotEmpty()) {
+                val condition = TaskAssignments.statusType inList filter.usableProgressStatuses.map { it.key }
                 query = query.andWhere { condition }
             }
             query.filterNotNull().map { row ->
@@ -218,8 +218,8 @@ class LocalTaskAssignmentsRepository(
                 val condition = TaskAssignments.memberId neq uuidConverter.toStorage(filter.notMemberId)
                 query = query.andWhere { condition }
             }
-            if (filter.progressStatus != ProgressStatus.UNKNOWN) {
-                val condition = TaskAssignments.statusType eq filter.progressStatus.key
+            if (filter.usableProgressStatuses.isNotEmpty()) {
+                val condition = TaskAssignments.statusType inList filter.usableProgressStatuses.map { it.key }
                 query = query.andWhere { condition }
             }
             // Filter assignments whose tasks belong to the houses provided

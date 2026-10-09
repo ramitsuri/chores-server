@@ -35,9 +35,11 @@ interface TaskAssignmentsRepository {
 data class TaskAssignmentFilter(
     val memberId: String? = null,
     val notMemberId: String? = null,
-    val progressStatus: ProgressStatus = ProgressStatus.UNKNOWN,
+    private val progressStatuses: List<ProgressStatus> = emptyList(),
     val onlyActiveAndPausedHouse: Boolean
-)
+) {
+    val usableProgressStatuses = progressStatuses.filter { it != ProgressStatus.UNKNOWN }
+}
 
 data class TaskAssignmentInsert(
     val progressStatus: ProgressStatus,
