@@ -10,7 +10,6 @@ import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.models.TaskDto
 import com.ramitsuri.plugins.getMemberId
 import com.ramitsuri.repository.access.TaskAccessController
-import io.ktor.server.application.call
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -32,7 +31,7 @@ class TaskRoutes(
     override val routes: Route.() -> Unit = {
         // Get all
         get {
-            val requesterMemberId = this.context.getMemberId() ?: return@get call.respond(
+            val requesterMemberId = call.getMemberId() ?: return@get call.respond(
                 invalidTokenError.first,
                 invalidTokenError.second
             )
@@ -48,7 +47,7 @@ class TaskRoutes(
 
         // Get by ID
         get("{id}") {
-            val requesterMemberId = this.context.getMemberId() ?: return@get call.respond(
+            val requesterMemberId = call.getMemberId() ?: return@get call.respond(
                 invalidTokenError.first,
                 invalidTokenError.second
             )
@@ -79,7 +78,7 @@ class TaskRoutes(
 
         // Add
         post {
-            val requesterMemberId = this.context.getMemberId() ?: return@post call.respond(
+            val requesterMemberId = call.getMemberId() ?: return@post call.respond(
                 invalidTokenError.first,
                 invalidTokenError.second
             )
@@ -148,7 +147,7 @@ class TaskRoutes(
 
         // Delete by Id
         delete("{id}") {
-            val requesterMemberId = this.context.getMemberId() ?: return@delete call.respond(
+            val requesterMemberId = call.getMemberId() ?: return@delete call.respond(
                 invalidTokenError.first,
                 invalidTokenError.second
             )
@@ -172,7 +171,7 @@ class TaskRoutes(
 
         // Edit
         put("{id}") {
-            val requesterMemberId = this.context.getMemberId() ?: return@put call.respond(
+            val requesterMemberId = call.getMemberId() ?: return@put call.respond(
                 invalidTokenError.first,
                 invalidTokenError.second
             )

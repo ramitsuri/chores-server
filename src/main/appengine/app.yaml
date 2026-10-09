@@ -1,4 +1,4 @@
-runtime: java11
+runtime: java17
 entrypoint: 'java -jar ChoresServer-0.0.31-all.jar'
 automatic_scaling:
   min_instances: 1

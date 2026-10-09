@@ -5,10 +5,11 @@ import com.ramitsuri.plugins.configureSecurity
 import com.ramitsuri.plugins.configureSerialization
 import io.ktor.server.application.Application
 import io.ktor.server.application.plugin
+import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.routing.HttpMethodRouteSelector
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.Routing
+import io.ktor.server.routing.RoutingNode
+import io.ktor.server.routing.RoutingRoot
 
 fun main() {
     val appContainer = AppContainer()
@@ -23,7 +24,11 @@ fun main() {
         appContainer.dummyDataProvider.setup()
     }
     appContainer.getTaskScheduler().start()
-    embeddedServer(appContainer.getApplicationEngine(), port = 8081, configure = {
+    embeddedServer(appContainer.getApplicationEngine(), configure = {
+        connector {
+            // App Engine provides the port to listen on via PORT
+            port = System.getenv("PORT")?.toIntOrNull() ?: 8081
+        }
         connectionGroupSize = 2
         workerGroupSize = 5
         callGroupSize = 10
@@ -39,7 +44,7 @@ fun main() {
 }
 
 private fun Application.logRoutes() {
-    val root = plugin(Routing)
+    val root = plugin(RoutingRoot)
     val allRoutes = allRoutes(root)
     val allRoutesWithMethod = allRoutes.filter { it.selector is HttpMethodRouteSelector }
     allRoutesWithMethod.forEach {
@@ -47,6 +52,6 @@ private fun Application.logRoutes() {
     }
 }
 
-fun allRoutes(root: Route): List<Route> {
+fun allRoutes(root: RoutingNode): List<RoutingNode> {
     return listOf(root) + root.children.flatMap { allRoutes(it) }
 }

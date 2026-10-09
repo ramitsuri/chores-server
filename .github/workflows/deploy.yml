@@ -15,7 +15,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
       - name: Add google.json from secrets
         env:
@@ -34,13 +40,15 @@ jobs:
           echo "  JWT_ISSUER: ${{ secrets.JWT_ISSUER }}" >> src/main/appengine/app.yaml
           echo "  ADD_DUMMY_DATA: ${{ secrets.ADD_DUMMY_DATA }}" >> src/main/appengine/app.yaml
 
-      - name: Setup GCP Service Account
-        uses: google-github-actions/setup-gcloud@v0
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          version: 'latest'
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
           project_id: ${{ secrets.GCP_PROJECT }}
-          service_account_key: ${{ secrets.GCP_CREDENTIALS }}
-          export_default_credentials: true
 
       - name: Deploy to App Engine
         run: ./gradlew appengineDeploy

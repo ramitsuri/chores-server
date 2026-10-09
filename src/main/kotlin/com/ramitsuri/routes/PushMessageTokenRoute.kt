@@ -4,7 +4,6 @@ import com.ramitsuri.models.PushMessageTokenDto
 import com.ramitsuri.plugins.getMemberId
 import com.ramitsuri.repository.interfaces.PushMessageTokenRepository
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -16,7 +15,7 @@ class PushMessageTokenRoute(private val repository: PushMessageTokenRepository) 
 
     override val routes: Route.() -> Unit = {
         put {
-            val requesterMemberId = this.context.getMemberId() ?: return@put call.respond(
+            val requesterMemberId = call.getMemberId() ?: return@put call.respond(
                 invalidTokenError.first,
                 invalidTokenError.second
             )

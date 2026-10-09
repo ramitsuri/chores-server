@@ -11,13 +11,14 @@ import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.models.Task
 import com.ramitsuri.repository.interfaces.HousesRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.statements.InsertStatement
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.statements.InsertStatement
+import org.jetbrains.exposed.v1.jdbc.deleteAll
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.UUID
@@ -128,7 +129,7 @@ class LocalTasksRepository(
     override suspend fun getForHouses(houseIds: List<String>): List<Task> {
         val houseIdUuids = houseIds.map { uuidConverter.toStorage(it) }
         return query {
-            Tasks.select { Tasks.houseId.inList(houseIdUuids) }.filterNotNull().map {
+            Tasks.selectAll().where { Tasks.houseId.inList(houseIdUuids) }.filterNotNull().map {
                 rowToTask(it)
             }
         }
@@ -137,7 +138,7 @@ class LocalTasksRepository(
     override suspend fun get(id: String): Task? {
         return query {
             val uuid = uuidConverter.toStorage(id)
-            Tasks.select { Tasks.id.eq(uuid) }.map {
+            Tasks.selectAll().where { Tasks.id.eq(uuid) }.map {
                 rowToTask(it)
             }.singleOrNull()
         }
@@ -146,7 +147,7 @@ class LocalTasksRepository(
     override suspend fun get(ids: List<String>): List<Task> {
         val taskUuids = ids.map { uuidConverter.toStorage(it) }
         return query {
-            Tasks.select { Tasks.id.inList(taskUuids) }
+            Tasks.selectAll().where { Tasks.id.inList(taskUuids) }
                 .filterNotNull()
                 .map {
                     rowToTask(it)

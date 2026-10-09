@@ -9,17 +9,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.datetime.toJavaInstant
-import kotlinx.datetime.toKotlinInstant
 import java.lang.Exception
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
+import kotlin.time.toJavaInstant
+import kotlin.time.toKotlinInstant
 
 class RepeatScheduler(
     private val config: RepeatSchedulerConfig,

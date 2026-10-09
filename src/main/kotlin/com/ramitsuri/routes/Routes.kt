@@ -10,17 +10,15 @@ import io.ktor.server.routing.*
 
 abstract class Routes(private val authenticationConfig: String? = Constants.JWT_AUTH_CONFIG_BASE) {
     fun register(application: Application) {
+        val routesPath = this@Routes.path
+        val routesBuilder = this@Routes.routes
         application.routing {
             if (authenticationConfig != null) {
                 authenticate(authenticationConfig) {
-                    route(path) {
-                        routes()
-                    }
+                    route(routesPath, routesBuilder)
                 }
             } else {
-                route(path) {
-                    routes()
-                }
+                route(routesPath, routesBuilder)
             }
         }
     }

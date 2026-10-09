@@ -6,7 +6,6 @@ import com.ramitsuri.models.TaskAssignmentDto
 import com.ramitsuri.plugins.getMemberId
 import com.ramitsuri.repository.access.TaskAssignmentAccessController
 import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
-import io.ktor.server.application.call
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -22,7 +21,7 @@ class TaskAssignmentRoutes(
     override val routes: Route.() -> Unit = {
         // Get for filter
         get("filter") {
-            val requesterMemberId = this.context.getMemberId() ?: return@get call.respond(
+            val requesterMemberId = call.getMemberId() ?: return@get call.respond(
                 invalidTokenError.first,
                 invalidTokenError.second
             )
@@ -54,7 +53,7 @@ class TaskAssignmentRoutes(
 
         // Edit
         put {
-            val requesterMemberId = this.context.getMemberId() ?: return@put call.respond(
+            val requesterMemberId = call.getMemberId() ?: return@put call.respond(
                 invalidTokenError.first,
                 invalidTokenError.second
             )

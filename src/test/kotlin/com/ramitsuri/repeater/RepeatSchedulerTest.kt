@@ -8,10 +8,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlin.time.Duration.Companion.seconds
 
 class RepeatSchedulerTest : BaseRepeaterTest() {

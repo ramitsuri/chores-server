@@ -137,6 +137,8 @@ hs_err_pid*
 ### Kotlin ###
 # Compiled class file
 build/
+# Kotlin compiler daemon session files
+.kotlin/
 
 /data/
 
@@ -148,5 +150,3 @@ build/
 src/main/resources/google.json
 
 local.properties
-
-.kotlin

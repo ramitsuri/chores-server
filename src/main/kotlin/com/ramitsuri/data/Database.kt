@@ -2,15 +2,16 @@ package com.ramitsuri.data
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.exposed.dao.id.IntIdTable
-import org.jetbrains.exposed.dao.id.UUIDTable
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.Database.Companion.connect
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.Column
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.dao.id.IntIdTable
+import org.jetbrains.exposed.v1.core.dao.id.java.UUIDTable
+import org.jetbrains.exposed.v1.core.java.javaUUID
+import org.jetbrains.exposed.v1.jdbc.Database.Companion.connect
+import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.*
 
 object DatabaseFactory {
@@ -54,7 +55,7 @@ object DatabaseFactory {
         }
     }
 
-    suspend fun <T> queryWithTransaction(block: (Transaction) -> T): T {
+    suspend fun <T> queryWithTransaction(block: (JdbcTransaction) -> T): T {
         return withContext(Dispatchers.IO) {
             transaction {
                 block(this)
@@ -65,7 +66,7 @@ object DatabaseFactory {
 
 object Houses : UUIDTable() {
     val name: Column<String> = varchar("name", 50)
-    val createdByMemberId: Column<UUID> = uuid("memberId").references(Members.id)
+    val createdByMemberId: Column<UUID> = javaUUID("memberId").references(Members.id)
     val createdDate: Column<String> = varchar("createdDate", 50)
     val activeStatus: Column<Int> = integer("activeStatus")
 }
@@ -78,8 +79,8 @@ object Members : UUIDTable() {
 }
 
 object MemberAssignments : UUIDTable() {
-    val memberId: Column<UUID> = uuid("memberId").references(Members.id)
-    val houseId: Column<UUID> = uuid("houseId").references(Houses.id)
+    val memberId: Column<UUID> = javaUUID("memberId").references(Members.id)
+    val houseId: Column<UUID> = javaUUID("houseId").references(Houses.id)
 }
 
 object Tasks : UUIDTable() {
@@ -89,8 +90,8 @@ object Tasks : UUIDTable() {
     val repeatValue: Column<Int> = integer("repeatValue")
     val repeatUnit: Column<Int> = integer("repeatUnit")
     val repeatEndDate: Column<String?> = varchar("repeatEndDate", 50).nullable().default(null)
-    val houseId: Column<UUID> = uuid("houseId").references(Houses.id)
-    val memberId: Column<UUID> = uuid("memberId").references(Members.id)
+    val houseId: Column<UUID> = javaUUID("houseId").references(Houses.id)
+    val memberId: Column<UUID> = javaUUID("memberId").references(Members.id)
     val rotateMember: Column<Boolean> = bool("rotateMember")
     val createdDate: Column<String> = varchar("createdDate", 50)
     val activeStatus: Column<Int> = integer("activeStatus").default(1)
@@ -99,12 +100,12 @@ object Tasks : UUIDTable() {
 object TaskAssignments : UUIDTable() {
     val statusType: Column<Int> = integer("statusType")
     val statusDate: Column<String> = varchar("statusDate", 50)
-    val taskId: Column<UUID> = uuid("taskId").references(Tasks.id)
-    val memberId: Column<UUID> = uuid("memberId").references(Members.id)
+    val taskId: Column<UUID> = javaUUID("taskId").references(Tasks.id)
+    val memberId: Column<UUID> = javaUUID("memberId").references(Members.id)
     val dueDate: Column<String> = varchar("dueDate", 50)
     val createdDate: Column<String> = varchar("createdDate", 50)
     val createType: Column<Int> = integer("createType")
-    val statusByMember: Column<UUID?> = uuid("statusByMember").nullable().default(null)
+    val statusByMember: Column<UUID?> = javaUUID("statusByMember").nullable().default(null)
 }
 
 object RunTimeLogs : IntIdTable() {
@@ -112,8 +113,8 @@ object RunTimeLogs : IntIdTable() {
 }
 
 object PushMessageTokens : IntIdTable() {
-    val memberId: Column<UUID> = uuid("memberId").references(Members.id)
-    val deviceId: Column<UUID> = uuid("deviceId")
+    val memberId: Column<UUID> = javaUUID("memberId").references(Members.id)
+    val deviceId: Column<UUID> = javaUUID("deviceId")
     val token: Column<String> = text("token")
     val uploadedDateTime: Column<String> = varchar("uploadedDateTime", 50).default("2023-09-13T00:00:00Z")
 }

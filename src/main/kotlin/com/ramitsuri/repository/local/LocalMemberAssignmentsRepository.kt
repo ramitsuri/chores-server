@@ -8,13 +8,12 @@ import com.ramitsuri.models.MemberAssignment
 import com.ramitsuri.repository.interfaces.HousesRepository
 import com.ramitsuri.repository.interfaces.MemberAssignmentsRepository
 import com.ramitsuri.repository.interfaces.MembersRepository
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.statements.InsertStatement
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.statements.InsertStatement
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import java.util.UUID
 
 class LocalMemberAssignmentsRepository(
@@ -63,7 +62,7 @@ class LocalMemberAssignmentsRepository(
     override suspend fun get(id: String): MemberAssignment? {
         val resultRow = DatabaseFactory.query {
             val uuid = uuidConverter.toStorage(id)
-            MemberAssignments.select {MemberAssignments.id.eq(uuid)}.singleOrNull()
+            MemberAssignments.selectAll().where { MemberAssignments.id.eq(uuid) }.singleOrNull()
         } ?: return null
         val member = membersRepository.get(rowToMemberId(resultRow)) ?: return null
         return rowToMemberAssignment(resultRow, member)
@@ -73,7 +72,7 @@ class LocalMemberAssignmentsRepository(
         val members = membersRepository.get()
         return DatabaseFactory.query {
             val uuid = uuidConverter.toStorage(houseId)
-            MemberAssignments.select {MemberAssignments.houseId.eq(uuid)}.filterNotNull().mapNotNull {row ->
+            MemberAssignments.selectAll().where { MemberAssignments.houseId.eq(uuid) }.filterNotNull().mapNotNull {row ->
                 val member = members.firstOrNull {it.id == rowToMemberId(row)}
                 if (member != null) {
                     rowToMemberAssignment(row, member)
@@ -88,7 +87,7 @@ class LocalMemberAssignmentsRepository(
         val members = membersRepository.get()
         return DatabaseFactory.query {
             val uuid = uuidConverter.toStorage(memberId)
-            MemberAssignments.select {MemberAssignments.memberId.eq(uuid)}.filterNotNull().mapNotNull {row ->
+            MemberAssignments.selectAll().where { MemberAssignments.memberId.eq(uuid) }.filterNotNull().mapNotNull {row ->
                 val member = members.firstOrNull {it.id == rowToMemberId(row)}
                 if (member != null) {
                     rowToMemberAssignment(row, member)

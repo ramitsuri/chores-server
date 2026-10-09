@@ -3,7 +3,6 @@ package com.ramitsuri.routes
 import com.ramitsuri.models.AccessResult
 import com.ramitsuri.plugins.getMemberId
 import com.ramitsuri.repository.access.SyncAccessController
-import io.ktor.server.application.call
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -14,7 +13,7 @@ class SyncRoutes(private val syncAccessController: SyncAccessController) : Route
 
     override val routes: Route.() -> Unit = {
         get {
-            val requesterMemberId = this.context.getMemberId() ?: return@get call.respond(
+            val requesterMemberId = call.getMemberId() ?: return@get call.respond(
                 invalidTokenError.first,
                 invalidTokenError.second
             )

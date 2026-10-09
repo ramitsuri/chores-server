@@ -7,15 +7,14 @@ import com.ramitsuri.models.Access
 import com.ramitsuri.models.Member
 import com.ramitsuri.repository.interfaces.MembersRepository
 import com.toxicbakery.bcrypt.Bcrypt
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.statements.InsertStatement
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.statements.InsertStatement
+import org.jetbrains.exposed.v1.jdbc.deleteAll
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import java.time.Instant
 import java.util.UUID
 
@@ -70,7 +69,7 @@ class LocalMembersRepository(
     override suspend fun get(id: String): Member? {
         return query {
             val uuid = uuidConverter.toStorage(id)
-            Members.select { Members.id.eq(uuid) }.map {
+            Members.selectAll().where { Members.id.eq(uuid) }.map {
                 rowToMember(it)
             }.singleOrNull()
         }
@@ -82,7 +81,7 @@ class LocalMembersRepository(
                 return@query null
             }
             val uuid = uuidConverter.toStorage(id)
-            val member = Members.select { Members.id.eq(uuid) }.map {
+            val member = Members.selectAll().where { Members.id.eq(uuid) }.map {
                 rowToMemberWithKey(it)
             }.singleOrNull() ?: return@query null
             if (Bcrypt.verify(key, member.key.toByteArray())) {
@@ -96,7 +95,7 @@ class LocalMembersRepository(
     override suspend fun getAccess(id: String): Access {
         return query {
             val uuid = uuidConverter.toStorage(id)
-            Members.select { Members.id.eq(uuid) }.map { row ->
+            Members.selectAll().where { Members.id.eq(uuid) }.map { row ->
                 Access.fromKey(row[Members.access])
             }.singleOrNull() ?: Access.NONE
         }

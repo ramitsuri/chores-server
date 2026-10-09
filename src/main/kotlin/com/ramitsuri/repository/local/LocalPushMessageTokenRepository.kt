@@ -5,12 +5,13 @@ import com.ramitsuri.data.DatabaseFactory
 import com.ramitsuri.data.PushMessageTokens
 import com.ramitsuri.models.PushMessageToken
 import com.ramitsuri.repository.interfaces.PushMessageTokenRepository
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -24,7 +25,8 @@ class LocalPushMessageTokenRepository(
         return DatabaseFactory.query {
             val memberIdUuids = memberIds.map { uuidConverter.toStorage(it) }
             PushMessageTokens
-                .select { PushMessageTokens.memberId.inList(memberIdUuids) }
+                .selectAll()
+                .where { PushMessageTokens.memberId.inList(memberIdUuids) }
                 .filterNotNull()
                 .map { row ->
                     rowToPushMessageToken(row)
@@ -43,7 +45,8 @@ class LocalPushMessageTokenRepository(
             val memberIdUuid = uuidConverter.toStorage(memberId)
             val deviceIdUuid = uuidConverter.toStorage(deviceId)
             val existing = PushMessageTokens
-                .select {
+                .selectAll()
+                .where {
                     PushMessageTokens.memberId.eq(memberIdUuid)
                         .and(PushMessageTokens.deviceId.eq(deviceIdUuid))
                 }

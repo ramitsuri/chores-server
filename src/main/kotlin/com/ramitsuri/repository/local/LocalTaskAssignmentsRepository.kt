@@ -16,18 +16,21 @@ import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
 import com.ramitsuri.repository.interfaces.TaskAssignmentInsert
 import com.ramitsuri.repository.interfaces.TaskAssignmentsRepository
 import com.ramitsuri.repository.interfaces.TasksRepository
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.andNot
-import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.insertAndGetId
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toJavaLocalDateTime
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.neq
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.andNot
+import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.jdbc.andWhere
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.UUID
@@ -90,7 +93,7 @@ class LocalTaskAssignmentsRepository(
     override suspend fun getMostRecentForTask(taskId: String): TaskAssignment? {
         val taskUuid = uuidConverter.toStorage(taskId)
         val rowValue = DatabaseFactory.query {
-            TaskAssignments.select { TaskAssignments.taskId.eq(taskUuid) }
+            TaskAssignments.selectAll().where { TaskAssignments.taskId.eq(taskUuid) }
                 .orderBy(TaskAssignments.dueDate to SortOrder.DESC)
                 .limit(1)
                 .firstOrNull()
@@ -101,7 +104,7 @@ class LocalTaskAssignmentsRepository(
     override suspend fun get(taskAssignmentIds: List<String>): List<TaskAssignment> {
         val taskAssignmentUuids = taskAssignmentIds.map { uuidConverter.toStorage(it) }
         val rowValues = DatabaseFactory.query {
-            TaskAssignments.select { TaskAssignments.id.inList(taskAssignmentUuids) }
+            TaskAssignments.selectAll().where { TaskAssignments.id.inList(taskAssignmentUuids) }
                 .filterNotNull()
                 .map { row ->
                     rowToTaskAssignmentRawValues(row)
