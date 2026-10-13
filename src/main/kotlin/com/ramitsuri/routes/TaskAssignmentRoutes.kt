@@ -27,14 +27,10 @@ class TaskAssignmentRoutes(
             )
             val memberId = call.request.queryParameters["member"]
             val notMemberId = call.request.queryParameters["notmember"]
-            val progressStatuses = try {
-                call.request.queryParameters.getAll("progress").orEmpty()
-                    .map { rawProgressStatus ->
-                        ProgressStatus.fromKey(rawProgressStatus.toInt())
-                    }
-            } catch (e: Exception) {
-                emptyList()
-            }
+            val progressStatuses = call.request.queryParameters.getAll("progress").orEmpty()
+                .flatMap { it.split(",") }
+                .mapNotNull { it.trim().toIntOrNull() }
+                .map { ProgressStatus.fromKey(it) }
             val dueDateWithinDays = call.request.queryParameters["duedatewithindays"]?.toIntOrNull()
             val filter = TaskAssignmentFilter(
                 memberId = memberId,
