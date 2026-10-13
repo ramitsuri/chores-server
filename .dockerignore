@@ -1,0 +1,12 @@
+# Keep the Docker build context small and free of local secrets
+.git
+.gradle
+.idea
+.kotlin
+build
+data
+docker/seed
+
+# Local config/secrets must not be baked into images; config comes from env vars in docker/compose.yaml
+src/main/resources/env.properties
+src/main/resources/google.json

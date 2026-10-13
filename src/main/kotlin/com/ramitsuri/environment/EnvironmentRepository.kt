@@ -24,6 +24,12 @@ class EnvironmentRepository {
 
     fun getJwtIssuer() = System.getenv("JWT_ISSUER") ?: properties.getProperty("JWT_ISSUER") ?: "jwt_issuer"
 
+    // Defaults to enabled so production behavior doesn't change
+    fun pushMessagesEnabled(): Boolean =
+        System.getenv("PUSH_MESSAGES_ENABLED")?.toBoolean()
+            ?: properties.getProperty("PUSH_MESSAGES_ENABLED")?.toBoolean()
+            ?: true
+
     fun addDummyData(): Boolean =
         System.getenv("ADD_DUMMY_DATA")?.toBoolean() ?: properties.getProperty("ADD_DUMMY_DATA")?.toBoolean() ?: false
 }

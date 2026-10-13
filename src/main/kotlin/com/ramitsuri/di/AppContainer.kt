@@ -10,6 +10,7 @@ import com.ramitsuri.events.EventService
 import com.ramitsuri.events.SystemEventService
 import com.ramitsuri.plugins.JwtService
 import com.ramitsuri.pushmessage.FirebasePushMessageDispatcher
+import com.ramitsuri.pushmessage.NoOpPushMessageDispatcher
 import com.ramitsuri.pushmessage.PushMessageDispatcher
 import com.ramitsuri.pushmessage.PushMessagePayloadGenerator
 import com.ramitsuri.pushmessage.PushMessageService
@@ -99,7 +100,11 @@ class AppContainer {
 
     val dummyDataProvider = DummyDataProvider()
 
-    private val pushMessageDispatcher: PushMessageDispatcher = FirebasePushMessageDispatcher()
+    private val pushMessageDispatcher: PushMessageDispatcher = if (environment.pushMessagesEnabled()) {
+        FirebasePushMessageDispatcher()
+    } else {
+        NoOpPushMessageDispatcher()
+    }
     private val pushMessagePayloadGenerator = PushMessagePayloadGenerator(
         tasksRepository = tasksRepository,
         taskAssignmentsRepository = taskAssignmentsRepository,

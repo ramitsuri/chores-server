@@ -1,0 +1,63 @@
+# Ephemeral local environment: Postgres + Chores server + dummy data.
+# All data lives in memory (tmpfs) and is gone when the containers stop.
+#
+#   docker compose -f docker/compose.yaml up --build     # start (Ctrl+C to stop)
+#   docker compose -f docker/compose.yaml down           # stop and remove everything
+#
+# See docker/README.md for test logins and IDs.
+name: chores-local
+
+services:
+  db:
+    image: postgres:17 # Matches production (Supabase, Postgres 17)
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chores
+    tmpfs:
+      - /var/lib/postgresql/data # In-memory, wiped on every stop
+    ports:
+      - "5433:5432" # 5433 on host to avoid clashing with other local Postgres instances
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d chores"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/chores
+      DB_DRIVER: org.postgresql.Driver
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: local-jwt-secret
+      JWT_ISSUER: chores-local
+      ADD_DUMMY_DATA: "false"
+      PUSH_MESSAGES_ENABLED: "false"
+      PORT: "8081"
+    ports:
+      - "8081:8081"
+
+  # One-shot: waits for the server to create the tables, inserts dummy data, then exits
+  seed:
+    image: postgres:17
+    depends_on:
+      db:
+        condition: service_healthy
+      server:
+        condition: service_started
+    environment:
+      PGHOST: db
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: chores
+    volumes:
+      - ./seed:/seed:ro
+    entrypoint: ["bash", "/seed/seed.sh"]
+    restart: "no"
