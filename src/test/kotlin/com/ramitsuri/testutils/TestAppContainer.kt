@@ -36,7 +36,13 @@ class TestAppContainer {
             clock = Clock.System,
         )
     val tasksTaskAssignmentsRepository =
-        LocalTasksTaskAssignmentsRepository(localDateTimeConverter, uuidConverter, eventService)
+        LocalTasksTaskAssignmentsRepository(
+            localDateTimeConverter,
+            instantConverter,
+            uuidConverter,
+            eventService,
+            clock = Clock.System,
+        )
     val memberAssignmentsRepository =
         LocalMemberAssignmentsRepository(
             membersRepository,

@@ -26,10 +26,10 @@ class TaskAccessController(
             }
             Access.READ_HOUSE_WRITE_OWN, Access.READ_HOUSE_WRITE_HOUSE -> {
                 val houseIds = getHouseIds(requesterMemberId)
-                AccessResult.Success(tasksRepository.getForHouses(houseIds))
+                AccessResult.Success(tasksTaskAssignmentsRepository.getForHouses(houseIds))
             }
             Access.READ_ALL_WRITE_ALL -> {
-                AccessResult.Success(tasksRepository.get())
+                AccessResult.Success(tasksTaskAssignmentsRepository.get())
             }
         }
     }

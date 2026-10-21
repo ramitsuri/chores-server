@@ -2,6 +2,7 @@ package com.ramitsuri.repository.interfaces
 
 import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.RepeatUnit
+import com.ramitsuri.models.Task
 import java.time.LocalDateTime
 
 interface TasksTaskAssignmentsRepository {
@@ -18,4 +19,8 @@ interface TasksTaskAssignmentsRepository {
     ): Boolean
 
     suspend fun delete(taskId: String): Boolean
+
+    suspend fun get(): List<Task>
+
+    suspend fun getForHouses(houseIds: List<String>): List<Task>
 }
