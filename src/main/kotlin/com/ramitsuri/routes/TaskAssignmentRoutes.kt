@@ -56,7 +56,7 @@ class TaskAssignmentRoutes(
                 invalidTokenError.second
             )
             val assignmentDtos = call.receive<List<TaskAssignmentDto>>()
-                .filter { ProgressStatus.fromKey(it.progressStatus) != ProgressStatus.UNKNOWN }
+                .filter { ProgressStatus.fromKey(it.progressStatus) != ProgressStatus.UNKNOWN || it.shouldTransfer }
             when (val accessResult = taskAssignmentsAccessController.edit(requesterMemberId, assignmentDtos)) {
                 is AccessResult.Success -> {
                     call.respond(accessResult.data)

@@ -3,6 +3,7 @@ package com.ramitsuri.repository.local
 import com.ramitsuri.data.Converter
 import com.ramitsuri.data.DatabaseFactory
 import com.ramitsuri.data.TaskAssignments
+import com.ramitsuri.data.Tasks
 import com.ramitsuri.events.Event
 import com.ramitsuri.events.EventService
 import com.ramitsuri.models.ActiveStatus
@@ -11,6 +12,7 @@ import com.ramitsuri.models.ProgressStatus
 import com.ramitsuri.models.TaskAssignment
 import com.ramitsuri.models.TaskAssignmentDto
 import com.ramitsuri.repository.interfaces.HousesRepository
+import com.ramitsuri.repository.interfaces.MemberAssignmentsRepository
 import com.ramitsuri.repository.interfaces.MembersRepository
 import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
 import com.ramitsuri.repository.interfaces.TaskAssignmentInsert
@@ -19,14 +21,14 @@ import com.ramitsuri.repository.interfaces.TasksRepository
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.neq
-import org.jetbrains.exposed.v1.core.and
-import org.jetbrains.exposed.v1.core.andNot
-import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -41,6 +43,7 @@ class LocalTaskAssignmentsRepository(
     private val tasksRepository: TasksRepository,
     private val membersRepository: MembersRepository,
     private val housesRepository: HousesRepository,
+    private val memberAssignmentsRepository: MemberAssignmentsRepository,
     private val instantConverter: Converter<Instant, String>,
     private val localDateTimeConverter: Converter<LocalDateTime, String>,
     private val uuidConverter: Converter<String, UUID>,
@@ -69,27 +72,12 @@ class LocalTaskAssignmentsRepository(
 
     override suspend fun edit(taskAssignments: List<TaskAssignmentDto>, requesterMemberId: String): List<String> {
         val updatedIds = mutableListOf<String>()
-        DatabaseFactory.query {
-            taskAssignments.forEach { taskAssignmentDto ->
-                val uuid = uuidConverter.toStorage(taskAssignmentDto.id)
-                val requesterMemberIdUuid = uuidConverter.toStorage(requesterMemberId)
-                val result = TaskAssignments.update({
-                    TaskAssignments.id.eq(uuid)
-                        .andNot { TaskAssignments.statusType.eq(taskAssignmentDto.progressStatus) }
-                }) {
-                    it[statusDate] = instantConverter.toStorage(taskAssignmentDto.progressStatusDate)
-                    it[statusType] = taskAssignmentDto.progressStatus
-                    it[statusByMember] = requesterMemberIdUuid
-                }
-                if (result == 1) { // Indicates row updated
-                    updatedIds.add(taskAssignmentDto.id)
-                }
+        taskAssignments.forEach { taskAssignmentDto ->
+            if (updateAssignment(taskAssignmentDto, requesterMemberId)) {
+                updatedIds.add(taskAssignmentDto.id)
             }
         }
         eventService.post(Event.AssignmentsUpdated(updatedIds))
-        // Returning everything so that clients can update their local state. It's possible that some assignments
-        // weren't updated in case they already had the new progress status from a different client. In that case, the
-        // assignment does have the new status, just not from the client requesting this change.
         return taskAssignments.map { it.id }
     }
 
@@ -121,28 +109,13 @@ class LocalTaskAssignmentsRepository(
         requesterMemberId: String
     ): List<String> {
         val updatedIds = mutableListOf<String>()
-        DatabaseFactory.query {
-            taskAssignments.forEach { taskAssignmentDto ->
-                val uuid = uuidConverter.toStorage(taskAssignmentDto.id)
-                val requesterMemberIdUuid = uuidConverter.toStorage(requesterMemberId)
-                val result = TaskAssignments.update({
-                    TaskAssignments.id.eq(uuid)
-                        .and { TaskAssignments.memberId.eq(requesterMemberIdUuid) }
-                        .andNot { TaskAssignments.statusType.eq(taskAssignmentDto.progressStatus) }
-                }) {
-                    it[statusDate] = instantConverter.toStorage(taskAssignmentDto.progressStatusDate)
-                    it[statusType] = taskAssignmentDto.progressStatus
-                    it[statusByMember] = requesterMemberIdUuid
-                }
-                if (result == 1) { // Indicates row updated
-                    updatedIds.add(taskAssignmentDto.id)
-                }
+        val requesterMemberIdUuid = uuidConverter.toStorage(requesterMemberId)
+        taskAssignments.forEach { taskAssignmentDto ->
+            if (updateAssignment(taskAssignmentDto, requesterMemberId, TaskAssignments.memberId.eq(requesterMemberIdUuid))) {
+                updatedIds.add(taskAssignmentDto.id)
             }
         }
         eventService.post(Event.AssignmentsUpdated(updatedIds))
-        // Returning everything so that clients can update their local state. It's possible that some assignments
-        // weren't updated in case they already had the new progress status from a different client. In that case, the
-        // assignment does have the new status, just not from the client requesting this change.
         return taskAssignments.map { it.id }
     }
 
@@ -153,29 +126,66 @@ class LocalTaskAssignmentsRepository(
     ): List<String> {
         val taskIdUuids = tasksRepository.getForHouses(houseIds).map { uuidConverter.toStorage(it.id) }
         val updatedIds = mutableListOf<String>()
-        DatabaseFactory.query {
-            taskAssignments.forEach { taskAssignmentDto ->
-                val uuid = uuidConverter.toStorage(taskAssignmentDto.id)
-                val requesterMemberIdUuid = uuidConverter.toStorage(requesterMemberId)
-                val result = TaskAssignments.update({
-                    TaskAssignments.id.eq(uuid)
-                        .and { TaskAssignments.taskId.inList(taskIdUuids) }
-                        .andNot { TaskAssignments.statusType.eq(taskAssignmentDto.progressStatus) }
-                }) {
+        taskAssignments.forEach { taskAssignmentDto ->
+            if (updateAssignment(taskAssignmentDto, requesterMemberId, TaskAssignments.taskId.inList(taskIdUuids))) {
+                updatedIds.add(taskAssignmentDto.id)
+            }
+        }
+        eventService.post(Event.AssignmentsUpdated(updatedIds))
+        return taskAssignments.map { it.id }
+    }
+
+    private suspend fun updateAssignment(
+        taskAssignmentDto: TaskAssignmentDto,
+        requesterMemberId: String,
+        additionalCondition: Op<Boolean>? = null
+    ): Boolean {
+        val uuid = uuidConverter.toStorage(taskAssignmentDto.id)
+        val requesterMemberIdUuid = uuidConverter.toStorage(requesterMemberId)
+
+        var otherMemberUuid: UUID? = null
+        if (taskAssignmentDto.shouldTransfer) {
+            val (currentMemberUuid, houseId) = DatabaseFactory.query {
+                val assignmentRow = TaskAssignments.selectAll().where { TaskAssignments.id.eq(uuid) }.firstOrNull()
+                if (assignmentRow != null) {
+                    val currentMemberUuid = assignmentRow[TaskAssignments.memberId]
+                    val taskId = assignmentRow[TaskAssignments.taskId]
+                    val taskRow = Tasks.selectAll().where { Tasks.id.eq(taskId) }.firstOrNull()
+                    if (taskRow != null) {
+                        Pair(currentMemberUuid, taskRow[Tasks.houseId].toString())
+                    } else null
+                } else null
+            } ?: Pair(null, null)
+
+            if (houseId != null && currentMemberUuid != null) {
+                val houseMembers = memberAssignmentsRepository.getForHouse(houseId)
+                val otherMember = houseMembers.firstOrNull { uuidConverter.toStorage(it.member.id) != currentMemberUuid }
+                if (otherMember != null) {
+                    otherMemberUuid = uuidConverter.toStorage(otherMember.member.id)
+                }
+            }
+        }
+
+        return DatabaseFactory.query {
+            val result = TaskAssignments.update({
+                val baseCondition = TaskAssignments.id.eq(uuid)
+                if (additionalCondition != null) {
+                    baseCondition.and(additionalCondition)
+                } else {
+                    baseCondition
+                }
+            }) {
+                if (ProgressStatus.fromKey(taskAssignmentDto.progressStatus) != ProgressStatus.UNKNOWN) {
                     it[statusDate] = instantConverter.toStorage(taskAssignmentDto.progressStatusDate)
                     it[statusType] = taskAssignmentDto.progressStatus
                     it[statusByMember] = requesterMemberIdUuid
                 }
-                if (result == 1) { // Indicates row updated
-                    updatedIds.add(taskAssignmentDto.id)
+                if (otherMemberUuid != null) {
+                    it[memberId] = otherMemberUuid
                 }
             }
+            result == 1
         }
-        eventService.post(Event.AssignmentsUpdated(updatedIds))
-        // Returning everything so that clients can update their local state. It's possible that some assignments
-        // weren't updated in case they already had the new progress status from a different client. In that case, the
-        // assignment does have the new status, just not from the client requesting this change.
-        return taskAssignments.map { it.id }
     }
 
     override suspend fun get(filter: TaskAssignmentFilter): List<TaskAssignment> {

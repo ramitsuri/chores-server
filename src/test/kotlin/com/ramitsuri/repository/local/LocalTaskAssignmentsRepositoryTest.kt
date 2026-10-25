@@ -4,6 +4,8 @@ import com.ramitsuri.models.ActiveStatus
 import com.ramitsuri.models.CreateType
 import com.ramitsuri.models.ProgressStatus
 import com.ramitsuri.models.RepeatUnit
+import com.ramitsuri.models.TaskAssignmentDto
+import com.ramitsuri.repository.interfaces.TaskAssignmentFilter
 import com.ramitsuri.repository.interfaces.TaskAssignmentInsert
 import com.ramitsuri.testutils.BaseNeedsDatabaseTest
 import kotlinx.coroutines.runBlocking
@@ -35,61 +37,63 @@ class LocalTaskAssignmentsRepositoryTest : BaseNeedsDatabaseTest() {
     }
 
     @Test
-    fun testAddReturnsInsertedIds() = runTest {
-        setup()
+    fun testTransferTaskAssignmentToOtherMember() = runTest {
+        val createDateTime = Instant.parse("2023-09-30T12:00:00Z")
+        repository = testAppContainer.taskAssignmentsRepository
 
-        // Should manually check for example with event service that ids are being returned
-        val taskT1 = testAppContainer.tasksRepository.get().first { it.name == "T1" }
+        val m1 = testAppContainer.membersRepository.add("M1", createDateTime)!!
+        val m2 = testAppContainer.membersRepository.add("M2", createDateTime)!!
+        val h1 = testAppContainer.housesRepository.add("H1", m1.id, createDateTime, ActiveStatus.ACTIVE)!!
+        testAppContainer.memberAssignmentsRepository.add(memberId = m1.id, houseId = h1.id)
+        testAppContainer.memberAssignmentsRepository.add(memberId = m2.id, houseId = h1.id)
 
-        repository.add(
+        val t1 = testAppContainer.tasksRepository.add(
+            name = "T1",
+            description = "T1",
+            dueDate = dueDateTime,
+            repeatValue = 1,
+            repeatUnit = RepeatUnit.HOUR,
+            repeatEndDate = null,
+            houseId = h1.id,
+            memberId = m1.id,
+            rotateMember = false,
+            createdDate = createDateTime,
+            status = ActiveStatus.ACTIVE
+        )!!
+
+        testAppContainer.taskAssignmentsRepository.add(
             listOf(
                 TaskAssignmentInsert(
                     progressStatus = ProgressStatus.TODO,
-                    progressStatusDateTime = Instant.parse("2023-09-30T12:00:00Z"),
-                    taskId = taskT1.id,
-                    memberId = UUID.randomUUID().toString(),
-                    dueDateTime = dueDateTime,
-                    createdDateTime = Instant.parse("2023-09-30T12:00:00Z"),
-                    createType = CreateType.AUTO
-                ),
-                TaskAssignmentInsert(
-                    progressStatus = ProgressStatus.TODO,
-                    progressStatusDateTime = Instant.parse("2023-09-30T12:00:00Z"),
-                    taskId = taskT1.id,
-                    memberId = UUID.randomUUID().toString(),
-                    dueDateTime = dueDateTime,
-                    createdDateTime = Instant.parse("2023-09-30T12:00:00Z"),
-                    createType = CreateType.AUTO
-                ),
-                TaskAssignmentInsert(
-                    progressStatus = ProgressStatus.TODO,
-                    progressStatusDateTime = Instant.parse("2023-09-30T12:00:00Z"),
-                    taskId = taskT1.id,
-                    memberId = UUID.randomUUID().toString(),
-                    dueDateTime = dueDateTime,
-                    createdDateTime = Instant.parse("2023-09-30T12:00:00Z"),
-                    createType = CreateType.AUTO
-                ),
-                TaskAssignmentInsert(
-                    progressStatus = ProgressStatus.TODO,
-                    progressStatusDateTime = Instant.parse("2023-09-30T12:00:00Z"),
-                    taskId = taskT1.id,
-                    memberId = UUID.randomUUID().toString(),
-                    dueDateTime = dueDateTime,
-                    createdDateTime = Instant.parse("2023-09-30T12:00:00Z"),
-                    createType = CreateType.AUTO
-                ),
-                TaskAssignmentInsert(
-                    progressStatus = ProgressStatus.TODO,
-                    progressStatusDateTime = Instant.parse("2023-09-30T12:00:00Z"),
-                    taskId = taskT1.id,
-                    memberId = UUID.randomUUID().toString(),
-                    dueDateTime = dueDateTime,
-                    createdDateTime = Instant.parse("2023-09-30T12:00:00Z"),
+                    progressStatusDateTime = createDateTime,
+                    taskId = t1.id,
+                    memberId = m1.id,
+                    dueDateTime = t1.dueDateTime,
+                    createdDateTime = createDateTime,
                     createType = CreateType.AUTO
                 )
             )
         )
+
+        val initialAssignment = repository.get(
+            TaskAssignmentFilter(
+                memberId = m1.id,
+                onlyActiveAndPausedHouse = false
+            )
+        ).first()
+
+        assertEquals(m1.id, initialAssignment.member.id)
+
+        // Transfer assignment to M2
+        val dto = TaskAssignmentDto(
+            id = initialAssignment.id,
+            progressStatus = ProgressStatus.TODO.key,
+            shouldTransfer = true
+        )
+        repository.edit(listOf(dto), m1.id)
+
+        val transferredAssignment = repository.get(listOf(initialAssignment.id)).first()
+        assertEquals(m2.id, transferredAssignment.member.id)
     }
 
     private fun setup() {

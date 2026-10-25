@@ -59,11 +59,18 @@ class AppContainer {
     private val membersRepository = LocalMembersRepository(instantConverter, uuidConverter)
     private val tasksRepository =
         LocalTasksRepository(housesRepository, instantConverter, localDateTimeConverter, uuidConverter, eventService)
+    private val memberAssignmentsRepository =
+        LocalMemberAssignmentsRepository(
+            membersRepository,
+            housesRepository,
+            uuidConverter
+        )
     private val taskAssignmentsRepository =
         LocalTaskAssignmentsRepository(
             tasksRepository,
             membersRepository,
             housesRepository,
+            memberAssignmentsRepository,
             instantConverter,
             localDateTimeConverter,
             uuidConverter,
@@ -77,12 +84,6 @@ class AppContainer {
             uuidConverter,
             eventService,
             clock = Clock.System,
-        )
-    private val memberAssignmentsRepository =
-        LocalMemberAssignmentsRepository(
-            membersRepository,
-            housesRepository,
-            uuidConverter
         )
     private val taskAssignmentsAccessController =
         TaskAssignmentAccessController(memberAssignmentsRepository, taskAssignmentsRepository, membersRepository)

@@ -24,11 +24,18 @@ class TestAppContainer {
     val membersRepository = LocalMembersRepository(instantConverter, uuidConverter)
     val tasksRepository =
         LocalTasksRepository(housesRepository, instantConverter, localDateTimeConverter, uuidConverter, eventService)
+    val memberAssignmentsRepository =
+        LocalMemberAssignmentsRepository(
+            membersRepository,
+            housesRepository,
+            uuidConverter
+        )
     val taskAssignmentsRepository =
         LocalTaskAssignmentsRepository(
             tasksRepository,
             membersRepository,
             housesRepository,
+            memberAssignmentsRepository,
             instantConverter,
             localDateTimeConverter,
             uuidConverter,
@@ -42,12 +49,6 @@ class TestAppContainer {
             uuidConverter,
             eventService,
             clock = Clock.System,
-        )
-    val memberAssignmentsRepository =
-        LocalMemberAssignmentsRepository(
-            membersRepository,
-            housesRepository,
-            uuidConverter
         )
     val pushMessageTokenRepository = LocalPushMessageTokenRepository(uuidConverter, instantConverter)
 }

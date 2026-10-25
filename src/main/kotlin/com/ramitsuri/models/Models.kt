@@ -173,6 +173,7 @@ data class TaskAssignmentDto(
     val progressStatus: Int,
     @Serializable(with = InstantSerializer::class)
     val progressStatusDate: Instant = Instant.now(),
+    val shouldTransfer: Boolean = false,
 )
 
 @Serializable
