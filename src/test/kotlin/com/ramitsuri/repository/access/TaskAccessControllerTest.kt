@@ -137,7 +137,8 @@ class TaskAccessControllerTest {
         assertEquals(
             AddEditTaskResultDto(
                 successfulRequestIds = listOf("req_add", "req_edit"),
-                deleteTaskAssignmentsTaskIds = listOf("task2")
+                deleteTaskAssignmentsTaskIds = listOf("task2"),
+                tasks = listOf(createdTask, existingTask)
             ),
             results
         )
@@ -158,7 +159,8 @@ class TaskAccessControllerTest {
         assertEquals(
             AddEditTaskResultDto(
                 successfulRequestIds = emptyList(),
-                deleteTaskAssignmentsTaskIds = emptyList()
+                deleteTaskAssignmentsTaskIds = emptyList(),
+                tasks = emptyList()
             ),
             results
         )

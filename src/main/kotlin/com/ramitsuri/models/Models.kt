@@ -146,6 +146,7 @@ sealed interface AddEditTaskDto {
 data class AddEditTaskResultDto(
     val successfulRequestIds: List<String>,
     val deleteTaskAssignmentsTaskIds: List<String>,
+    val tasks: List<Task>,
 )
 
 @Serializable

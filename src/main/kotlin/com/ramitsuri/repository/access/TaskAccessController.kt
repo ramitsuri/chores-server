@@ -67,7 +67,7 @@ class TaskAccessController(
     }
 
     /**
-     * Returns result containing list of client request ids that successfully completed and list of task ids whose task assignments were deleted
+     * Returns result containing list of client request ids that successfully completed, list of task ids whose task assignments were deleted, and updated tasks
      */
     suspend fun addOrEdit(
         requesterMemberId: String,
@@ -75,6 +75,7 @@ class TaskAccessController(
     ): AddEditTaskResultDto {
         val successfulRequestIds = mutableListOf<String>()
         val deleteTaskAssignmentsTaskIds = mutableListOf<String>()
+        val tasks = mutableListOf<Task>()
 
         requests.forEach { addOrEdit ->
             when (addOrEdit) {
@@ -111,6 +112,7 @@ class TaskAccessController(
                         )
                         if (result is AccessResult.Success && result.data != null) {
                             successfulRequestIds.add(addOrEdit.clientRequestId)
+                            tasks.add(result.data)
                         } else {
                             log.warning("Add access requirements not met or error occurred")
                         }
@@ -171,8 +173,9 @@ class TaskAccessController(
                         status = status,
                         shouldDeleteTaskAssignments = addOrEdit.shouldDeleteTaskAssignments
                     )
-                    if (result is AccessResult.Success && result.data) {
+                    if (result is AccessResult.Success && result.data != null) {
                         successfulRequestIds.add(addOrEdit.clientRequestId)
+                        tasks.add(result.data)
                         if (addOrEdit.shouldDeleteTaskAssignments) {
                             deleteTaskAssignmentsTaskIds.add(addOrEdit.taskId)
                         }
@@ -184,7 +187,8 @@ class TaskAccessController(
         }
         return AddEditTaskResultDto(
             successfulRequestIds = successfulRequestIds,
-            deleteTaskAssignmentsTaskIds = deleteTaskAssignmentsTaskIds
+            deleteTaskAssignmentsTaskIds = deleteTaskAssignmentsTaskIds,
+            tasks = tasks
         )
     }
 
@@ -235,7 +239,7 @@ class TaskAccessController(
     }
 
     /**
-     * Returns [AccessResult.Success] with false data if the task doesn't exist or could not be edited
+     * Returns [AccessResult.Success] with null data if the task doesn't exist or could not be edited
      */
     suspend fun edit(
         requesterMemberId: String,
@@ -249,12 +253,12 @@ class TaskAccessController(
         rotateMember: Boolean,
         status: ActiveStatus,
         shouldDeleteTaskAssignments: Boolean,
-    ): AccessResult<Boolean> {
-        val existingTask = tasksRepository.get(taskId) ?: return AccessResult.Success(false)
+    ): AccessResult<Task?> {
+        val existingTask = tasksRepository.get(taskId) ?: return AccessResult.Success(null)
         if (!canWrite(requesterMemberId, existingTask)) {
             return AccessResult.Failure
         }
-        val result = if (shouldDeleteTaskAssignments) {
+        val success = if (shouldDeleteTaskAssignments) {
             tasksTaskAssignmentsRepository.edit(
                 taskId,
                 name,
@@ -279,7 +283,11 @@ class TaskAccessController(
                 status
             )
         }
-        return AccessResult.Success(result)
+        if (!success) {
+            return AccessResult.Success(null)
+        }
+        val updatedTask = tasksRepository.get(taskId)
+        return AccessResult.Success(updatedTask)
     }
 
     /**

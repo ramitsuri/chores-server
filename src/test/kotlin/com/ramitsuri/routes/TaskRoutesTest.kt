@@ -39,7 +39,8 @@ class TaskRoutesTest {
 
         coEvery { accessController.addOrEdit(memberId, any()) } returns AddEditTaskResultDto(
             successfulRequestIds = listOf("req1", "req2"),
-            deleteTaskAssignmentsTaskIds = listOf("task1")
+            deleteTaskAssignmentsTaskIds = listOf("task1"),
+            tasks = emptyList()
         )
 
         application {
@@ -92,7 +93,8 @@ class TaskRoutesTest {
 
         coEvery { accessController.addOrEdit(memberId, any()) } returns AddEditTaskResultDto(
             successfulRequestIds = listOf("req1"),
-            deleteTaskAssignmentsTaskIds = emptyList()
+            deleteTaskAssignmentsTaskIds = emptyList(),
+            tasks = emptyList()
         )
 
         application {
