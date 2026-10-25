@@ -1,5 +1,6 @@
 package com.ramitsuri.data
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.v1.core.Column
@@ -15,8 +16,16 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.*
 
 object DatabaseFactory {
-    fun init(url: String, driver: String, username: String = "", password: String = "") {
+    private var dispatcher: CoroutineDispatcher = Dispatchers.IO
 
+    fun init(
+        url: String,
+        driver: String,
+        username: String = "",
+        password: String = "",
+        dispatcher: CoroutineDispatcher = Dispatchers.IO
+    ) {
+        this.dispatcher = dispatcher
         val database = connect(url, driver, username, password)
         TransactionManager.defaultDatabase = database
 
@@ -48,7 +57,7 @@ object DatabaseFactory {
     }
 
     suspend fun <T> query(block: () -> T): T {
-        return withContext(Dispatchers.IO) {
+        return withContext(dispatcher) {
             transaction {
                 block()
             }
@@ -56,7 +65,7 @@ object DatabaseFactory {
     }
 
     suspend fun <T> queryWithTransaction(block: (JdbcTransaction) -> T): T {
-        return withContext(Dispatchers.IO) {
+        return withContext(dispatcher) {
             transaction {
                 block(this)
             }

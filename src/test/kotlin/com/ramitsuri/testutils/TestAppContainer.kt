@@ -18,7 +18,7 @@ class TestAppContainer {
     val instantConverter = InstantConverter()
     val localDateTimeConverter = LocalDateTimeConverter()
 
-    private val eventService = SystemEventService()
+    val eventService = SystemEventService()
 
     val housesRepository = LocalHousesRepository(uuidConverter, instantConverter)
     val membersRepository = LocalMembersRepository(instantConverter, uuidConverter)

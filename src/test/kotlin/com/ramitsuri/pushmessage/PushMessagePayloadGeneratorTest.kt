@@ -201,6 +201,35 @@ class PushMessagePayloadGeneratorTest : BaseNeedsDatabaseTest() {
         assertTrue(otherMessages.all { it.payload.doneByOthers.isEmpty() && it.payload.wontDoByOthers.isEmpty() })
     }
 
+    @Test
+    fun getPushMessagesForTaskAssignment_ifTransferred() = runTest {
+        // Arrange
+        setup(now = Instant.parse("2023-09-12T12:00:00Z"))
+
+        // Act
+        val taskAssignmentToTransfer = taskAssignments
+            .first { it.task.name == "T2" && it.member.name == "M1" }
+        val taskAssignmentsToEdit = listOf(
+            TaskAssignmentDto(
+                id = taskAssignmentToTransfer.id,
+                progressStatus = ProgressStatus.TODO.key,
+                progressStatusDate = now,
+                shouldTransfer = true
+            )
+        )
+        val requesterMemberId = members.first { it.name == "M1" }.id
+        testAppContainer.taskAssignmentsRepository.edit(taskAssignmentsToEdit, requesterMemberId)
+        val pushMessages = pushMessagePayloadGenerator
+            .getForTaskAssignments(taskAssignmentsToEdit.map { it.id }, now)
+
+        // Assert: All 4 devices for members M1 and M2 in House H2 should receive push messages
+        assertEquals(4, pushMessages.size)
+        assertNotNull(pushMessages.firstOrNull { it.recipientToken == "TokenM1D1" })
+        assertNotNull(pushMessages.firstOrNull { it.recipientToken == "TokenM1D2" })
+        assertNotNull(pushMessages.firstOrNull { it.recipientToken == "TokenM2D1" })
+        assertNotNull(pushMessages.firstOrNull { it.recipientToken == "TokenM2D2" })
+    }
+
     private fun setup(now: Instant) {
         pushMessagePayloadGenerator = PushMessagePayloadGenerator(
             tasksRepository = testAppContainer.tasksRepository,

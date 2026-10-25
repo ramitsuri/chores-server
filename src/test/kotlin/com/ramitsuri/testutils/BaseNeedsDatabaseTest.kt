@@ -20,7 +20,11 @@ abstract class BaseNeedsDatabaseTest {
     @Before
     open fun setUp() {
         Dispatchers.setMain(mainThreadSurrogate)
-        DatabaseFactory.init(Constants.DB_URL_TEST, Constants.DB_DRIVER_TEST)
+        DatabaseFactory.init(
+            url = Constants.DB_URL_TEST,
+            driver = Constants.DB_DRIVER_TEST,
+            dispatcher = mainThreadSurrogate
+        )
         testAppContainer = TestAppContainer()
     }
 
