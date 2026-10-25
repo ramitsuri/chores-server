@@ -17,7 +17,7 @@ application {
 }
 
 group = "com.ramitsuri"
-version = "0.0.35"
+version = "0.0.36"
 
 appengine {
     stage {
