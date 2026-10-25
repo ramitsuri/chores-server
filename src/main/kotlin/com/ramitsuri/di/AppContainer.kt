@@ -91,6 +91,7 @@ class AppContainer {
             memberAssignmentsRepository,
             tasksRepository,
             tasksTaskAssignmentsRepository,
+            localDateTimeConverter,
             membersRepository,
         )
     private val syncRepository = LocalSyncRepository(memberAssignmentsRepository, housesRepository)

@@ -70,13 +70,9 @@ class LocalTasksTaskAssignmentsRepository(
                 return@queryWithTransaction false
             }
             // Delete to do assignments for task that is being edited
-            val deleteSuccess = TaskAssignments.deleteWhere {
+            TaskAssignments.deleteWhere {
                 TaskAssignments.taskId.eq(uuid)
                     .and(TaskAssignments.statusType.eq(ProgressStatus.TODO.key))
-            } > 0
-            if (!deleteSuccess) {
-                transaction.rollback()
-                return@queryWithTransaction false
             }
             return@queryWithTransaction true
         }
@@ -97,13 +93,9 @@ class LocalTasksTaskAssignmentsRepository(
                 return@queryWithTransaction false
             }
             // Delete to do assignments for task that is being deleted
-            val deleteAssignmentsSuccess = TaskAssignments.deleteWhere {
+            TaskAssignments.deleteWhere {
                 TaskAssignments.taskId.eq(uuid)
                     .and(TaskAssignments.statusType.eq(ProgressStatus.TODO.key))
-            } > 0
-            if (!deleteAssignmentsSuccess) {
-                transaction.rollback()
-                return@queryWithTransaction false
             }
             return@queryWithTransaction true
         }

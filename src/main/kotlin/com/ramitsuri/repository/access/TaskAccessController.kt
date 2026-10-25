@@ -1,8 +1,12 @@
 package com.ramitsuri.repository.access
 
+import com.ramitsuri.data.LocalDateTimeConverter
+import com.ramitsuri.extensions.Loggable
 import com.ramitsuri.models.Access
 import com.ramitsuri.models.AccessResult
 import com.ramitsuri.models.ActiveStatus
+import com.ramitsuri.models.AddEditTaskDto
+import com.ramitsuri.models.AddEditTaskResultDto
 import com.ramitsuri.models.RepeatUnit
 import com.ramitsuri.models.Task
 import com.ramitsuri.repository.interfaces.MemberAssignmentsRepository
@@ -16,18 +20,22 @@ class TaskAccessController(
     private val memberAssignmentsRepository: MemberAssignmentsRepository,
     private val tasksRepository: TasksRepository,
     private val tasksTaskAssignmentsRepository: TasksTaskAssignmentsRepository,
-    membersRepository: MembersRepository
-) : AccessController(membersRepository) {
+    private val localDateTimeConverter: LocalDateTimeConverter,
+    membersRepository: MembersRepository,
+) : AccessController(membersRepository), Loggable {
+    override val log = logger()
 
     suspend fun get(requesterMemberId: String): AccessResult<List<Task>> {
         return when (getAccess(requesterMemberId)) {
             Access.NONE -> {
                 AccessResult.Failure
             }
+
             Access.READ_HOUSE_WRITE_OWN, Access.READ_HOUSE_WRITE_HOUSE -> {
                 val houseIds = getHouseIds(requesterMemberId)
                 AccessResult.Success(tasksTaskAssignmentsRepository.getForHouses(houseIds))
             }
+
             Access.READ_ALL_WRITE_ALL -> {
                 AccessResult.Success(tasksTaskAssignmentsRepository.get())
             }
@@ -42,6 +50,7 @@ class TaskAccessController(
             Access.NONE -> {
                 AccessResult.Failure
             }
+
             Access.READ_HOUSE_WRITE_OWN, Access.READ_HOUSE_WRITE_HOUSE -> {
                 val task = tasksRepository.get(taskId) ?: return AccessResult.Success(null)
                 if (task.houseId in getHouseIds(requesterMemberId)) {
@@ -50,10 +59,133 @@ class TaskAccessController(
                     AccessResult.Failure
                 }
             }
+
             Access.READ_ALL_WRITE_ALL -> {
                 AccessResult.Success(tasksRepository.get(taskId))
             }
         }
+    }
+
+    /**
+     * Returns result containing list of client request ids that successfully completed and list of task ids whose task assignments were deleted
+     */
+    suspend fun addOrEdit(
+        requesterMemberId: String,
+        requests: List<AddEditTaskDto>,
+    ): AddEditTaskResultDto {
+        val successfulRequestIds = mutableListOf<String>()
+        val deleteTaskAssignmentsTaskIds = mutableListOf<String>()
+
+        requests.forEach { addOrEdit ->
+            when (addOrEdit) {
+                is AddEditTaskDto.Add -> {
+                    val name = addOrEdit.name
+                    val description = addOrEdit.description
+                    val dueDateTime =
+                        if (addOrEdit.dueDateTime != null) localDateTimeConverter.toMain(addOrEdit.dueDateTime) else null
+                    val repeatValue = addOrEdit.repeatValue ?: 0
+                    val repeatUnit = RepeatUnit.fromKey(addOrEdit.repeatUnit ?: RepeatUnit.NONE.key)
+                    val repeatEndDateTime = if (addOrEdit.repeatEndDateTime != null) {
+                        localDateTimeConverter.toMain(addOrEdit.repeatEndDateTime)
+                    } else {
+                        null
+                    }
+                    val houseId = addOrEdit.houseId
+                    val memberId = addOrEdit.memberId
+                    val rotateMember = addOrEdit.rotateMember ?: false
+                    val createdDate = addOrEdit.createdDate
+                    if (name != null && description != null && houseId != null && dueDateTime != null && memberId != null) {
+                        val result = add(
+                            requesterMemberId = requesterMemberId,
+                            name = name,
+                            description = description,
+                            dueDateTime = dueDateTime,
+                            repeatValue = repeatValue,
+                            repeatUnit = repeatUnit,
+                            repeatEndDateTime = repeatEndDateTime,
+                            houseId = houseId,
+                            memberId = memberId,
+                            rotateMember = rotateMember,
+                            createdDate = createdDate,
+                            status = ActiveStatus.ACTIVE,
+                        )
+                        if (result is AccessResult.Success && result.data != null) {
+                            successfulRequestIds.add(addOrEdit.clientRequestId)
+                        } else {
+                            log.warning("Add access requirements not met or error occurred")
+                        }
+                    } else {
+                        val message = buildString {
+                            append("null values: ")
+                            if (name == null) append("name ")
+                            if (description == null) append("description ")
+                            if (houseId == null) append("houseId ")
+                            if (dueDateTime == null) append("dueDateTime ")
+                            if (memberId == null) append("memberId ")
+                        }
+                        log.warning("Add requirements not met, $message")
+                    }
+                }
+
+                is AddEditTaskDto.Edit -> {
+                    val existingTaskResult = get(requesterMemberId, addOrEdit.taskId)
+                    val existingTask = when (existingTaskResult) {
+                        is AccessResult.Failure -> {
+                            log.warning("Task access denied for edit: taskId=${addOrEdit.taskId}")
+                            null
+                        }
+
+                        is AccessResult.Success<Task?> -> {
+                            existingTaskResult.data
+                        }
+                    }
+                    if (existingTask == null) {
+                        log.warning("Task not found edit: taskId=${addOrEdit.taskId}")
+                        return@forEach
+                    }
+
+                    val name = addOrEdit.name ?: existingTask.name
+                    val description = addOrEdit.description ?: existingTask.description
+                    val dueDateTime = addOrEdit.dueDateTime
+                        ?.let { localDateTimeConverter.toMain(it) }
+                        ?: existingTask.dueDateTime
+                    val repeatUnit = addOrEdit.repeatUnit
+                        ?.let { RepeatUnit.fromKey(it) }
+                        ?: existingTask.repeatUnit
+                    val repeatValue = addOrEdit.repeatValue ?: existingTask.repeatValue
+                    val repeatEndDateTime = addOrEdit.repeatEndDateTime
+                        ?.let { localDateTimeConverter.toMain(it) }
+                        ?: existingTask.repeatEndDateTime
+                    val rotateMember = addOrEdit.rotateMember ?: existingTask.rotateMember
+                    val status = addOrEdit.status?.let { ActiveStatus.fromKey(it) } ?: existingTask.status
+                    val result = edit(
+                        requesterMemberId = requesterMemberId,
+                        taskId = addOrEdit.taskId,
+                        name = name,
+                        description = description,
+                        dueDateTime = dueDateTime,
+                        repeatValue = repeatValue,
+                        repeatUnit = repeatUnit,
+                        repeatEndDateTime = repeatEndDateTime,
+                        rotateMember = rotateMember,
+                        status = status,
+                        shouldDeleteTaskAssignments = addOrEdit.shouldDeleteTaskAssignments
+                    )
+                    if (result is AccessResult.Success && result.data) {
+                        successfulRequestIds.add(addOrEdit.clientRequestId)
+                        if (addOrEdit.shouldDeleteTaskAssignments) {
+                            deleteTaskAssignmentsTaskIds.add(addOrEdit.taskId)
+                        }
+                    } else {
+                        log.warning("Edit access requirements not met or edit failed for clientRequestId=${addOrEdit.clientRequestId}")
+                    }
+                }
+            }
+        }
+        return AddEditTaskResultDto(
+            successfulRequestIds = successfulRequestIds,
+            deleteTaskAssignmentsTaskIds = deleteTaskAssignmentsTaskIds
+        )
     }
 
     /**
@@ -71,13 +203,14 @@ class TaskAccessController(
         memberId: String,
         rotateMember: Boolean,
         createdDate: Instant,
-        status: ActiveStatus
+        status: ActiveStatus,
     ): AccessResult<Task?> {
         val hasAccess = when (getAccess(requesterMemberId)) {
             Access.NONE -> false
             Access.READ_HOUSE_WRITE_OWN -> {
                 memberId == requesterMemberId && houseId in getHouseIds(requesterMemberId)
             }
+
             Access.READ_HOUSE_WRITE_HOUSE -> houseId in getHouseIds(requesterMemberId)
             Access.READ_ALL_WRITE_ALL -> true
         }
@@ -115,7 +248,7 @@ class TaskAccessController(
         repeatEndDateTime: LocalDateTime?,
         rotateMember: Boolean,
         status: ActiveStatus,
-        shouldDeleteTaskAssignments: Boolean
+        shouldDeleteTaskAssignments: Boolean,
     ): AccessResult<Boolean> {
         val existingTask = tasksRepository.get(taskId) ?: return AccessResult.Success(false)
         if (!canWrite(requesterMemberId, existingTask)) {
@@ -166,6 +299,7 @@ class TaskAccessController(
             Access.READ_HOUSE_WRITE_OWN -> {
                 task.memberId == requesterMemberId && task.houseId in getHouseIds(requesterMemberId)
             }
+
             Access.READ_HOUSE_WRITE_HOUSE -> task.houseId in getHouseIds(requesterMemberId)
             Access.READ_ALL_WRITE_ALL -> true
         }

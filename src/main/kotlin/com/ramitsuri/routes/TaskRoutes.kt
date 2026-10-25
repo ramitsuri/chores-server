@@ -4,6 +4,7 @@ import com.ramitsuri.data.LocalDateTimeConverter
 import com.ramitsuri.extensions.Loggable
 import com.ramitsuri.models.AccessResult
 import com.ramitsuri.models.ActiveStatus
+import com.ramitsuri.models.AddEditTaskDto
 import com.ramitsuri.models.Error
 import com.ramitsuri.models.ErrorCode
 import com.ramitsuri.models.RepeatUnit
@@ -74,6 +75,19 @@ class TaskRoutes(
                     call.respond(HttpStatusCode.Unauthorized, "Not sufficient access")
                 }
             }
+        }
+
+        // Combine add edit multiple
+        post("/batch") {
+            val requesterMemberId = call.getMemberId() ?: return@post call.respond(
+                invalidTokenError.first,
+                invalidTokenError.second
+            )
+            val successfulClientRequestIds = taskAccessController.addOrEdit(
+                requesterMemberId = requesterMemberId,
+                requests = call.receive<List<AddEditTaskDto>>()
+            )
+            call.respond(successfulClientRequestIds)
         }
 
         // Add
@@ -249,7 +263,7 @@ class TaskRoutes(
             )
             when (accessResult) {
                 is AccessResult.Success -> {
-                    if (accessResult.data) {
+                    if (accessResult.data != null) {
                         call.respond(HttpStatusCode.OK)
                     } else {
                         call.respond(HttpStatusCode.NotFound)

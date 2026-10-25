@@ -1,9 +1,9 @@
 package com.ramitsuri.models
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.time.Instant
 import java.time.LocalDateTime
-import java.time.ZoneId
 
 @Serializable
 data class House(
@@ -13,13 +13,13 @@ data class House(
     @Serializable(with = InstantSerializer::class)
     val createdDate: Instant,
     @Serializable(with = ActiveStatusSerializer::class)
-    val status: ActiveStatus
+    val status: ActiveStatus,
 )
 
 @Serializable
 data class HouseDto(
     val name: String,
-    val createdByMemberId: String?
+    val createdByMemberId: String?,
 )
 
 @Serializable
@@ -30,7 +30,7 @@ data class Member(
     val createdDate: Instant,
     val key: String = "",
     @Serializable(with = ResourceAccessSerializer::class)
-    val access: Access = Access.READ_HOUSE_WRITE_OWN
+    val access: Access = Access.READ_HOUSE_WRITE_OWN,
 )
 
 @Serializable
@@ -40,13 +40,13 @@ data class MemberDto(val name: String)
 data class MemberAssignment(
     val id: String,
     val member: Member,
-    val houseId: String
+    val houseId: String,
 )
 
 @Serializable
 data class MemberAssignmentDto(
     val memberId: String,
-    val houseId: String
+    val houseId: String,
 )
 
 @Serializable
@@ -67,7 +67,7 @@ data class Task(
     @Serializable(with = InstantSerializer::class)
     val createdDate: Instant,
     @Serializable(with = ActiveStatusSerializer::class)
-    val status: ActiveStatus
+    val status: ActiveStatus,
 )
 
 @Serializable
@@ -81,7 +81,71 @@ data class TaskDto(
     val houseId: String?,
     val memberId: String?,
     val rotateMember: Boolean?,
+    val status: Int?,
+)
+
+@Serializable
+sealed interface AddEditTaskDto {
+    val name: String?
+    val description: String?
+    val dueDateTime: String?
+    val repeatValue: Int?
+    val repeatUnit: Int?
+    val repeatEndDateTime: String?
+    val houseId: String?
+    val memberId: String?
+    val rotateMember: Boolean?
     val status: Int?
+    val clientRequestId: String
+
+    @Serializable
+    @SerialName("add")
+    data class Add(
+        override val name: String? = null,
+        override val description: String? = null,
+        override val dueDateTime: String? = null,
+        override val repeatValue: Int? = null,
+        override val repeatUnit: Int? = null,
+        override val repeatEndDateTime: String? = null,
+        override val houseId: String? = null,
+        override val memberId: String? = null,
+        override val rotateMember: Boolean? = null,
+        override val status: Int = ActiveStatus.ACTIVE.key,
+        override val clientRequestId: String,
+    ) : AddEditTaskDto {
+        val createdDate: Instant
+            get() = Instant.now()
+    }
+
+    @Serializable
+    @SerialName("edit")
+    data class Edit(
+        val taskId: String,
+        override val name: String? = null,
+        override val description: String? = null,
+        override val dueDateTime: String? = null,
+        override val repeatValue: Int? = null,
+        override val repeatUnit: Int? = null,
+        override val repeatEndDateTime: String? = null,
+        override val houseId: String? = null,
+        override val memberId: String? = null,
+        override val rotateMember: Boolean? = null,
+        override val status: Int? = null,
+        override val clientRequestId: String,
+    ) : AddEditTaskDto {
+        val shouldDeleteTaskAssignments = dueDateTime != null ||
+                repeatUnit != null ||
+                repeatValue != null ||
+                repeatEndDateTime != null ||
+                rotateMember != null ||
+                status != null
+    }
+}
+
+@Serializable
+data class AddEditTaskResultDto(
+    val successfulRequestIds: List<String>,
+    val deleteTaskAssignmentsTaskIds: List<String>,
 )
 
 @Serializable
@@ -99,7 +163,7 @@ data class TaskAssignment(
     val createdDate: Instant,
     @Serializable(with = CreateTypeSerializer::class)
     val createType: CreateType,
-    val statusByMember: String?
+    val statusByMember: String?,
 )
 
 @Serializable
@@ -107,7 +171,7 @@ data class TaskAssignmentDto(
     val id: String = "",
     val progressStatus: Int,
     @Serializable(with = InstantSerializer::class)
-    val progressStatusDate: Instant = Instant.now()
+    val progressStatusDate: Instant = Instant.now(),
 )
 
 @Serializable
@@ -122,13 +186,14 @@ data class PushMessageToken(
 @Serializable
 data class PushMessageTokenDto(
     val deviceId: String,
-    val token: String
+    val token: String,
 )
 
 @Serializable
 data class Error(
     @Serializable(with = ErrorCodeSerializer::class)
-    val code: ErrorCode, val message: String
+    val code: ErrorCode,
+    val message: String,
 )
 
 @Serializable
@@ -137,7 +202,7 @@ data class Token(val authToken: String)
 @Serializable
 data class SyncResult(
     val associatedLists: List<House>,
-    val memberListAssociations: List<MemberAssignment>
+    val memberListAssociations: List<MemberAssignment>,
 )
 
 @Serializable
